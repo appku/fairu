@@ -1,5 +1,5 @@
 {
-    "name": "fairu",
+    "name": "@appku/fairu",
     "version": "0.0.1",
     "description": "Provides a CLI and layer of functionality to work with generated model types from stashku OPTIONS requests, letting you maintain models of your stashku-accessible data.",
     "repository": {
