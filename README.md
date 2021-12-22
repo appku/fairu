@@ -1,10 +1,6 @@
 # Fairu
 This is a utility library for the AppKu ecosystem which provides file and directory read/write operations for regular, YAML, TOML, and env files.
 
-# Running
-This is the core StashKu package and doesn not provide a CLI interface, as it is meant to be leveraged as a package. See the 
-[StashKu Migrate](https://github.com/appku/stashku-migrate) for the `stashku` CLI tool.
-
 # Configuration
 This library does not have any configuration options.
 
@@ -13,7 +9,7 @@ You can generate a static JSDoc site under the `docs/` path using the command `n
 
 # Installing
 ```sh
-npm i @appku/secure
+npm i @appku/fairu
 ```
 
 # Testing
