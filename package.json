@@ -1,0 +1,54 @@
+{
+    "name": "fairu",
+    "version": "0.0.1",
+    "description": "Provides a CLI and layer of functionality to work with generated model types from stashku OPTIONS requests, letting you maintain models of your stashku-accessible data.",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/appku/fairu.git"
+    },
+    "bugs": {
+        "url": "https://github.com/appku/fairu/issues"
+    },
+    "keywords": [
+        "toml",
+        "yaml",
+        "env",
+        "reader",
+        "writer"
+    ],
+    "author": "Append Media, LLC",
+    "license": "SEE LICENSE IN LICENSE",
+    "type": "module",
+    "main": "fairu.js",
+    "scripts": {
+        "prepare": "husky install",
+        "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --verbose --coverage",
+        "test-ci": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --verbose -ci",
+        "lint": "./node_modules/.bin/eslint ./",
+        "docs": "./node_modules/jsdoc/jsdoc.js -c jsdoc.json --readme README.md"
+    },
+    "jest": {
+        "testEnvironment": "node",
+        "testPathIgnorePatterns": [
+            "/node_modules/"
+        ]
+    },
+    "engines": {
+        "node": ">=14"
+    },
+    "dependencies": {
+        "@iarna/toml": "^2.2.5",
+        "glob": "^7.2.0",
+        "js-yaml": "^4.1.0"
+    },
+    "devDependencies": {
+        "@types/jest": "^27.0.2",
+        "eslint": "^8.1.0",
+        "eslint-plugin-jest": "^25.2.2",
+        "husky": "^7.0.4",
+        "jest": "^27.3.1",
+        "jsdoc": "^3.6.7",
+        "jsdoc-plugin-intersection": "^1.0.4",
+        "tidy-jsdoc": "^1.4.0"
+    }
+}
