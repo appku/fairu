@@ -21,11 +21,11 @@
     "type": "module",
     "main": "fairu.js",
     "scripts": {
-        "prepare": "husky install",
         "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --verbose --coverage",
         "test-ci": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --verbose -ci",
-        "lint": "./node_modules/.bin/eslint ./",
-        "docs": "./node_modules/jsdoc/jsdoc.js -c jsdoc.json --readme README.md"
+        "lint": "npx eslint ./",
+        "docs": "npx jsdoc -c jsdoc.json --readme README.md",
+        "serve-docs": "npx serve ./docs"
     },
     "jest": {
         "testEnvironment": "node",
@@ -42,13 +42,15 @@
         "js-yaml": "^4.1.0"
     },
     "devDependencies": {
-        "@types/jest": "^27.0.2",
-        "eslint": "^8.1.0",
-        "eslint-plugin-jest": "^25.2.2",
-        "husky": "^7.0.4",
-        "jest": "^27.3.1",
-        "jsdoc": "^3.6.7",
+        "@appku/jsdoc-template": "^1.0.0",
+        "@types/jest": "^27.4.1",
+        "eslint": "^8.13.0",
+        "eslint-plugin-jest": "^26.1.4",
+        "jest": "^27.5.1",
+        "jsdoc": "^3.6.10",
         "jsdoc-plugin-intersection": "^1.0.4",
-        "tidy-jsdoc": "^1.4.0"
+        "jsdoc-plugin-typescript": "^2.0.7",
+        "jsdoc-plugin-typescript-new": "^1.0.0",
+        "serve": "^13.0.2"
     }
 }

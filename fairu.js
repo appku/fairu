@@ -2,8 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { URL } from 'url';
 import glob from 'glob';
-import toml from '@iarna/toml';
-import yaml from 'js-yaml'; 
+import Util from './util.js';
 
 const _isTOMLFilePath = function (filePath) {
     if (
@@ -75,6 +74,7 @@ class Fairu {
          * @private
          */
         this._root = process.cwd();
+
     }
 
     /**
@@ -628,14 +628,11 @@ class Fairu {
                 if (fstringify) {
                     if (t !== 'string' && t !== 'boolean' && t !== 'number' && Buffer.isBuffer(content) === false && content instanceof Date === false) {
                         if (fstringify !== 'json' && (_isTOMLFilePath(filePath) || fstringify === 'toml')) {
-                            data = toml.stringify(data);
+                            data = Util.stringify(Util.format.TOML, data);
                         } else if (fstringify !== 'json' && (_isYAMLFilePath(filePath) || fstringify === 'yaml')) {
-                            data = yaml.dump(data, {
-                                indent: 4,
-                                lineWidth: 120
-                            });
+                            data = Util.stringify(Util.format.YAML, data);
                         } else {
-                            data = JSON.stringify(data, null, 4);
+                            data = Util.stringify(Util.format.JSON, data);
                         }
                     }
                 }
@@ -676,14 +673,11 @@ class Fairu {
                 if (fstringify) {
                     if (t !== 'string' && t !== 'boolean' && t !== 'number' && Buffer.isBuffer(content) === false && content instanceof Date === false) {
                         if (fstringify !== 'json' && (_isTOMLFilePath(filePath) || fstringify === 'toml')) {
-                            data = toml.stringify(data);
+                            data = Util.stringify(Util.format.TOML, data);
                         } else if (fstringify !== 'json' && (_isYAMLFilePath(filePath) || fstringify === 'yaml')) {
-                            data = yaml.dump(data, {
-                                indent: 4,
-                                lineWidth: 120
-                            });
+                            data = Util.stringify(Util.format.YAML, data);
                         } else {
-                            data = JSON.stringify(data, null, 4);
+                            data = Util.stringify(Util.format.JSON, data);
                         }
                     }
                 }
@@ -734,13 +728,11 @@ class Fairu {
                     if (readOK && fparse) {
                         try {
                             if (fparse !== 'json' && (_isTOMLFilePath(filePath) || fparse === 'toml')) {
-                                data = toml.parse(data.toString(fencoding || undefined));
+                                data = Util.parse(Util.format.TOML, data.toString(fencoding || undefined), filePath);
                             } else if (fparse !== 'json' && (_isYAMLFilePath(filePath) || fparse === 'yaml')) {
-                                data = yaml.load(data.toString(fencoding || undefined), {
-                                    filename: filePath
-                                });
+                                data = Util.parse(Util.format.YAML, data.toString(fencoding || undefined), filePath);
                             } else {
-                                data = JSON.parse(data.toString(fencoding || undefined));
+                                data = Util.parse(Util.format.JSON, data.toString(fencoding || undefined), filePath);
                             }
                         } catch (parseErr) {
                             if (fnullify) {
@@ -780,13 +772,11 @@ class Fairu {
                 data = fs.readFileSync(filePath, { encoding: fencoding });
                 if (fparse) {
                     if (fparse !== 'json' && (_isTOMLFilePath(filePath) || fparse === 'toml')) {
-                        data = toml.parse(data.toString(fencoding || undefined));
+                        data = Util.parse(Util.format.TOML, data.toString(fencoding || undefined), filePath);
                     } else if (fparse !== 'json' && (_isYAMLFilePath(filePath) || fparse === 'yaml')) {
-                        data = yaml.load(data.toString(fencoding || undefined), {
-                            filename: filePath
-                        });
+                        data = Util.parse(Util.format.YAML, data.toString(fencoding || undefined), filePath);
                     } else {
-                        data = JSON.parse(data.toString(fencoding || undefined));
+                        data = Util.parse(Util.format.JSON, data.toString(fencoding || undefined), filePath);
                     }
                 }
             } catch (err) {
@@ -805,4 +795,4 @@ class Fairu {
     }
 }
 
-export default Fairu;
+export {Fairu as default, Util};
