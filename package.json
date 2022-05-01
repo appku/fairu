@@ -1,6 +1,6 @@
 {
     "name": "@appku/fairu",
-    "version": "0.0.2",
+    "version": "1`.0.0",
     "description": "Provides a CLI and layer of functionality to work with generated model types from stashku OPTIONS requests, letting you maintain models of your stashku-accessible data.",
     "repository": {
         "type": "git",
@@ -38,7 +38,7 @@
     },
     "dependencies": {
         "@iarna/toml": "^2.2.5",
-        "glob": "^7.2.0",
+        "glob": "^8.0.1",
         "js-yaml": "^4.1.0"
     },
     "devDependencies": {
