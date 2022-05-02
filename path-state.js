@@ -41,10 +41,10 @@ class PathState {
         this.operation = null;
 
         /**
-         * Indicates the operation was successful.
-         * @type {Boolean}
+         * The last error that occurred during the Fairu operation.
+         * @type {Error}
          */
-        this.success = false;
+        this.error = null;
 
         /**
          * @type {Stats}

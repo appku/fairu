@@ -2,8 +2,10 @@ import path from 'path';
 import fs from 'fs/promises';
 import { constants } from 'fs';
 import glob from 'glob';
+import toml from '@iarna/toml';
+import yaml from 'js-yaml';
 import PathState from './path-state.js';
-import FairuResult from './fairu-result.js';
+import ReadPathState from './read-path-state.js';
 
 /**
  * @callback FairuPathCallback
@@ -15,6 +17,12 @@ import FairuResult from './fairu-result.js';
  * @callback FairuConditionCallback
  * @param {PathState} state - The state of the path as discovered by Fairu.
  * @returns {Boolean}
+ */
+
+/**
+ * @callback FairuPathStateCreateCallback
+ * @param {String} targetPath - The path utility for constructing file-system paths.
+ * @returns {PathState}
  */
 
 /**
@@ -48,14 +56,84 @@ class Fairu {
          * @private
          */
         this.metadata = {
+            /**
+             * @type {Array.<String>}
+             */
             with: [],
+            /**
+             * @type {Array.<String>}
+             */
             without: [],
+            /**
+             * @type {FairuConditionCallback}
+             */
             when: null,
+            /**
+             * @type {Boolean}
+             */
             throw: true,
+            /**
+             * @type {String}
+             */
             format: null,
+            /**
+             * @type {Boolean}
+             */
             ensure: false,
+            /**
+             * @type {String}
+             */
             encoding: null
         };
+    }
+
+    /**
+     * Stringifies an object into the specified format (yaml, toml, or json).
+     * @throws Error when the format is unknown.
+     * @throws Error when stringification fails.
+     * @param {Util.format} format - Can be either 'json', 'yaml', or 'json'.
+     * @param {*} object - The object to stringify.
+     * @param {Number} [space=4] - The number of spaces to use for indentations.
+     * @returns {String}
+     */
+    static stringify(format, object, space = 4) {
+        if (format) {
+            if (/json/i.test(format)) {
+                return JSON.stringify(object, null, space);
+            } else if (/yaml/i.test(format)) {
+                return yaml.dump(object, {
+                    indent: space,
+                    lineWidth: 120
+                });
+            } else if (/toml/i.test(format)) {
+                return toml.stringify(object);
+            }
+        }
+        throw new Error(`Unknown format "${format}".`);
+    }
+
+    /**
+     * Attempts to parse the given input string using the specified format parser into an object.
+     * @throws Error when the format is unknown.
+     * @throws Error when parsing fails.
+     * @param {Util.format} format - Can be either 'json', 'yaml', or 'json'.
+     * @param {*} inputString - The string to be parsed.
+     * @param {String} [filePath] - The file path used in error/warning messages.
+     * @returns {*}
+     */
+    static parse(format, inputString, filePath) {
+        if (format) {
+            if (/json/i.test(format)) {
+                return JSON.parse(inputString);
+            } else if (/yaml/i.test(format)) {
+                return yaml.load(inputString, {
+                    filename: filePath
+                });
+            } else if (/toml/i.test(format)) {
+                return toml.parse(inputString);
+            }
+        }
+        throw new Error(`Unknown format "${format}".`);
     }
 
     /**
@@ -221,6 +299,9 @@ class Fairu {
      * enabled (`false`) and the directory path does not exist, then the file operation will error.
      * 
      * Calling this function without a `ensure` parameter argument will set the flag to `true`.
+     * 
+     * This only has an effect on `write`, `append`, and `touch` operations.
+     * The `discover` and `read` operations *will not* attempt to ensure the path.
      * @throws Error when the `ensure` argument is not a boolean value.
      * @param {Boolean} [ensure=false] - If true, the directory path will be created if missing.
      * @returns {Fairu}
@@ -263,17 +344,23 @@ class Fairu {
     }
 
     /**
-     * Sets the conditional flags for the operation. Each flag must appear to be true for the operation to proceed on
-     * a given path. 
+     * Sets the conditional callback that determines, per discovered path, that the file-system operation being
+     * performed can continue and be processed. 
      * 
-     * Calling this function without an argument or `null` will reset it to it's default (no conditions).
+     * Calling this function without an argument or `null` will reset it to it's default (no conditional callback).
      * @throws Error when the specified conditions are not a callback function.
      * @param {FairuConditionCallback} conditions - Conditional flags indicating what states of the path must appear
      *  to be true before proceeding with the operation for a path.
      * @returns {Fairu}
      * @example
-     * Setting the `FairuConditionFlags.readable & FairuConditionFlags.exists` means the 
-     * path must exist and must be readable for the Fairu operation to proceed.
+     * Discovering only paths that are writable with a minimum size of 1024 bytes.
+     * ```js
+     * let states = await Fairu
+     *   .with('./*.js')
+     *   .when(s => s.stats && s.stats.size > 1024 && s.writable)
+     *   .discover();
+     * console.log(states);
+     * ```
      */
     when(conditions) {
         let conditionsType = typeof conditions;
@@ -314,9 +401,10 @@ class Fairu {
      * Expands globbed paths and discovers information about them, returning a record for each path (including invalid)
      * ones.
      * @throws Error when the `throw` flag is true and an error discovering paths is encountered.
+     * @param {FairuPathStateCreateCallback} [create] - Optional callback that returns an initialized `PathState`.
      * @returns {Promise.<Array.<PathState>>}
      */
-    async discover() {
+    async discover(create) {
         //de-glob
         let paths = [];
         for (let globPath of this.metadata.with) {
@@ -332,24 +420,87 @@ class Fairu {
         let results = [];
         for (let p of paths) {
             //build default state
-            let state = new PathState(p);
-            state.operation = 'discover';
-            results.push(state);
-            //gather dicey details
-            state.stats = await fs.stat(p);
-            //set success
-            state.success = true;
+            let state = null;
+            if (typeof create === 'function') {
+                state = create(p); //allow other Fairu operations to hijack discover for their usage.
+            } else {
+                state = new PathState(p);
+                state.operation = 'discover';
+            }
+            state.exists = true;
+            try {
+                //gather dicey details
+                state.stats = await fs.stat(p); //allowed to fail
+                try {
+                    await fs.access(p, constants.R_OK);
+                    state.readable = true;
+                } catch (readErr) { } // eslint-disable-line no-empty
+                try {
+                    await fs.access(p, constants.W_OK);
+                    state.writable = true;
+                } catch (writeErr) { } // eslint-disable-line no-empty
+            } catch (err) {
+                state.error = err;
+                if (err.code === 'ENOENT') {
+                    state.exists = false;
+                }
+                if (this.metadata.throw) {
+                    throw err;
+                }
+            }
+            if (this.metadata.when) {
+                let whenResult = this.metadata.when(state);
+                if (whenResult === true) {
+                    results.push(state);
+                } else if (whenResult !== false) {
+                    throw new Error(`The "when" condition for the Fairu operation "${state.operation}" failed to return a boolean result.`);
+                }
+            } else {
+                results.push(state);
+            }
         }
         return results;
     }
 
     /**
+     * Reads from all file-system paths specified in the Fairu operation.
+     * Directories will return data that is the top-level list of files and directories they contain. 
+     * Files and other types will return the data read in the form of a `Buffer` unless a `format` was specified.
      * 
-     * @returns {Promise.<Array.<FairuResult>>}
+     * If a format was specified, the read data will be (attempted) to parse from that format into an in-memory object.
+     * 
+     * If the file is in an errored state prior to the read, it will not be read and data will be `null`.
+     * @returns {Promise.<Array.<ReadPathState>>}
      */
     async read() {
-        let x = await this.discover();
-        return this;
+        let states = await this.discover(tp => new ReadPathState(tp));
+        for (let state of states) {
+            if (!state.error) { //skip paths in an errored state
+                try {
+                    if (state.stats.isDirectory()) {
+                        //path points to a directory, read the file list instead.
+                        state.data = await fs.readdir(state.path);
+                    } else {
+                        state.data = await fs.readFile(state.path, {
+                            encoding: this.metadata.encoding
+                        });
+                        if (this.metadata.format) {
+                            state.data = Fairu.parse(
+                                this.metadata.format,
+                                state.data.toString(this.metadata.encoding || undefined),
+                                state.path
+                            );
+                        }
+                    }
+                } catch (err) {
+                    state.error = err;
+                    if (this.metadata.throw) {
+                        throw err;
+                    }
+                }
+            }
+        }
+        return states;
     }
 
     async write(content) {
@@ -370,4 +521,4 @@ class Fairu {
 
 }
 
-export default Fairu;
+export { Fairu as default, FairuFormat };

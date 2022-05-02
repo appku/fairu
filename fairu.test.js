@@ -1,5 +1,13 @@
-import Fairu from './fairu.js';
+import Fairu, { FairuFormat } from './fairu.js';
 import path from 'path';
+import PathState from './path-state.js';
+
+const testObject = {
+    abc: 123,
+    hello: 'world',
+    truth: false,
+    zed: { ok: 3.14159 }
+};
 
 describe('#constructor', () => {
     it('constructs with metadata object defaults.', () => {
@@ -12,6 +20,47 @@ describe('#constructor', () => {
             ensure: false,
             encoding: null
         });
+    });
+});
+
+describe('.stringify', () => {
+    it('throws on unknown format.', () => {
+        expect(() => Fairu.stringify('bob', testObject)).toThrow('format');
+    });
+    it('stringifies to JSON.', () => {
+        expect(Fairu.stringify(FairuFormat.json, testObject)).toBe('{\n    "abc": 123,\n    "hello": "world",\n    "truth": false,\n    "zed": {\n        "ok": 3.14159\n    }\n}');
+    });
+    it('stringifies to JSON with different indent.', () => {
+        expect(Fairu.stringify(FairuFormat.json, testObject, 1)).toBe('{\n "abc": 123,\n "hello": "world",\n "truth": false,\n "zed": {\n  "ok": 3.14159\n }\n}');
+    });
+    it('stringifies to TOML.', () => {
+        expect(Fairu.stringify(FairuFormat.toml, testObject)).toBe('abc = 123\nhello = "world"\ntruth = false\n\n[zed]\nok = 3.14159\n');
+    });
+    it('stringifies to YAML.', () => {
+        expect(Fairu.stringify(FairuFormat.yaml, testObject)).toBe('abc: 123\nhello: world\ntruth: false\nzed:\n    ok: 3.14159\n');
+    });
+    it('stringifies to YAML with different indent.', () => {
+        expect(Fairu.stringify(FairuFormat.yaml, testObject, 1)).toBe('abc: 123\nhello: world\ntruth: false\nzed:\n ok: 3.14159\n');
+    });
+});
+
+describe('.parse', () => {
+    it('throws on unknown format.', () => {
+        expect(() => Fairu.parse('bob', '')).toThrow('format');
+    });
+    it('throws on bad parse.', () => {
+        expect(() => Fairu.parse(FairuFormat.json, '{][][[--++')).toThrow();
+        expect(() => Fairu.parse(FairuFormat.toml, '{][][[--++')).toThrow();
+        expect(() => Fairu.parse(FairuFormat.yaml, '{][][[--++')).toThrow();
+    });
+    it('parses JSON.', () => {
+        expect(Fairu.parse(FairuFormat.json, '{\n    "abc": 123,\n    "hello": "world",\n    "truth": false,\n    "zed": {\n        "ok": 3.14159\n    }\n}')).toMatchObject(testObject);
+    });
+    it('parses TOML.', () => {
+        expect(Fairu.parse(FairuFormat.toml, 'abc = 123\nhello = "world"\ntruth = false\n\n[zed]\nok = 3.14159\n')).toMatchObject(testObject);
+    });
+    it('parses YAML.', () => {
+        expect(Fairu.parse(FairuFormat.yaml, 'abc: 123\nhello: world\ntruth: false\nzed:\n    ok: 3.14159\n')).toMatchObject(testObject);
     });
 });
 
@@ -229,20 +278,74 @@ describe('#_globFind', () => {
         testPath = './test/read/sample-*.txt';
         results = await new Fairu()._globFind(testPath, ['**/*-[012].txt']);
         expect(results.length).toBe(1);
-        expect(results[0]).toBe(path.resolve( './test/read/sample-3.txt'));
+        expect(results[0]).toBe(path.resolve('./test/read/sample-3.txt'));
     });
     it('discovers files with a glob pattern.', async () => {
         let testPath = './test/read/sample-*.txt';
         let results = await new Fairu()._globFind(testPath);
         expect(results.length).toBe(4);
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < results.length; i++) {
             expect(results[i]).toBe(path.resolve(`./test/read/sample-${i}.txt`));
         }
     });
 });
 
 describe('#discover', () => {
-
+    it('returns path states for every path specified, including invalid ones.', async () => {
+        let results = await Fairu
+            .with('./test/read/**/*.txt', './test/doesntexist')
+            .throw(false)
+            .discover();
+        expect(results.length).toBe(7);
+        for (let i = 0; i < 6; i++) {
+            expect(results[i].path).toMatch(/sample-[0-9].txt$/);
+            expect(results[i].exists).toBe(true);
+            expect(results[i].readable).toBe(true);
+            expect(results[i].writable).toBe(true);
+            expect(results[i].operation).toBe('discover');
+            expect(results[i].error).toBeNull();
+            expect(results[i].stats).toBeTruthy();
+        }
+        expect(results[6].path).toMatch(/doesntexist$/);
+        expect(results[6].exists).toBe(false);
+        expect(results[6].readable).toBe(false);
+        expect(results[6].writable).toBe(false);
+        expect(results[6].operation).toBe('discover');
+        expect(results[6].error).not.toBeNull();
+        expect(results[6].stats).toBeNull();
+    });
+    it('applies "when" conditions to limit results.', async () => {
+        let results = await Fairu
+            .with('./test/read/**/*.txt', './test/nothing')
+            .when(s => s.exists && s.stats.size < 150)
+            .throw(false)
+            .discover();
+        expect(results.length).toBe(2);
+        for (let i = 0; i < results.length; i++) {
+            expect(results[i].exists).toBe(true);
+            expect(results[i].stats.size).toBeLessThan(150);
+        }
+    });
+    it('allows a caller to create a path state by providing a callback.', async () => {
+        let results = await Fairu
+            .with('./test/read/sample-0.txt')
+            .discover(tp => {
+                let ps = new PathState(tp);
+                ps.operation = 'monkeys';
+                return ps;
+            });
+        expect(results.length).toBe(1);
+        expect(results[0].operation).toBe('monkeys');
+    });
+    it('throws an error if the flag to throw is set (default).', () => {
+        expect(Fairu
+            .with('./test/read/**/*.txt', './test/doesntexist')
+            .discover()).rejects.toThrow(/ENOENT/);
+        expect(Fairu
+            .with('./test/read/**/*.txt', './test/doesntexist')
+            .throw(true)
+            .discover()).rejects.toThrow(/ENOENT/);
+    });
 });
 
 describe('#read', () => {
