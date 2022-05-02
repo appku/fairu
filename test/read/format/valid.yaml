@@ -1,0 +1,6 @@
+abc: 123
+hello: "world"
+truth: false
+
+zed:
+  ok: 3.14159

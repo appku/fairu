@@ -1,6 +1,7 @@
 import Fairu, { FairuFormat } from './fairu.js';
 import path from 'path';
 import PathState from './path-state.js';
+import ReadPathState from './read-path-state.js';
 
 const testObject = {
     abc: 123,
@@ -346,10 +347,65 @@ describe('#discover', () => {
             .throw(true)
             .discover()).rejects.toThrow(/ENOENT/);
     });
+    it('throws an error if the when condition fails to return a boolean.', () => {
+        expect(Fairu
+            .with('./test/read/sample*.txt')
+            .when(c => 'hello world')
+            .discover()).rejects.toThrow(/boolean/);
+    });
 });
 
 describe('#read', () => {
-
+    it('reads file contents to a buffer.', async () => {
+        let results = await Fairu.with('./test/read/sample-0.txt').read();
+        expect(results.length).toBe(1);
+        expect(results[0]).toBeInstanceOf(ReadPathState);
+        expect(Buffer.isBuffer(results[0].data)).toBe(true);
+        expect(results[0].data.length).toBe(116);
+        expect(results[0].data.toString()).toMatch(/lorem ipsum/i);
+    });
+    it('reads a directory listing.', async () => {
+        let results = await Fairu.with('./test/read/').read();
+        expect(results.length).toBe(1);
+        expect(results[0]).toBeInstanceOf(ReadPathState);
+        expect(results[0].data.length).toBe(6);
+        for (let i = 0; i < results[0].data.length; i++) {
+            expect(results[0].data[i]).toMatch(/(sample|format|subdir)/);
+        }
+    });
+    it('reads a json, yaml, and toml formatted file to an object.', async () => {
+        let formats = Object.keys(FairuFormat);
+        for (let f of formats) {
+            let results = await Fairu
+                .with(`./test/read/format/valid.${f}`)
+                .format(f)
+                .read();
+            expect(results.length).toBe(1);
+            expect(results[0]).toBeInstanceOf(ReadPathState);
+            expect(results[0].data).toMatchObject(testObject);
+        }
+    });
+    it('throws an error when trying to read and parse an invalid json, yaml, and toml formatted file to an object.', () => {
+        let formats = Object.keys(FairuFormat);
+        for (let f of formats) {
+            expect(Fairu
+                .with(`./test/read/format/invalid.${f}`)
+                .format(f)
+                .read()).rejects.toThrow();
+        }
+    });
+    it('does not throw an error if the "throw" flag is disabled.', async () => {
+        let formats = Object.keys(FairuFormat);
+        for (let f of formats) {
+            let results = await Fairu
+                .with(`./test/read/format/invalid.${f}`)
+                .format(f)
+                .throw(false)
+                .read();
+            expect(results.length).toBe(1);
+            expect(results[0].error).toBeTruthy();
+        }
+    });
 });
 
 describe('#write', () => {

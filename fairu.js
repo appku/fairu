@@ -401,6 +401,7 @@ class Fairu {
      * Expands globbed paths and discovers information about them, returning a record for each path (including invalid)
      * ones.
      * @throws Error when the `throw` flag is true and an error discovering paths is encountered.
+     * @throws Error when the "when" condition for the Fairu operation fails to return a boolean result.
      * @param {FairuPathStateCreateCallback} [create] - Optional callback that returns an initialized `PathState`.
      * @returns {Promise.<Array.<PathState>>}
      */
