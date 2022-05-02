@@ -5,6 +5,10 @@ import {Stats} from 'fs';
  * This class stores flags about the state of a path (file or directory or other...) when being evaluated by Fairu.
  */
 class PathState {
+    /**
+     * Creates a new `PathState` instance.
+     * @param {String} targetPath - The file-system path being represented.
+     */
     constructor(targetPath) {
 
         /**
