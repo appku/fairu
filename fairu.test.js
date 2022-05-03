@@ -438,7 +438,7 @@ describe('#write', () => {
         let stat = await fs.stat('./test/write/subdir/test/dir/');
         expect(stat.isDirectory()).toBe(true);
     });
-    it('writes an object, stringified json, toml, and yaml to path', async () => {
+    it('writes an object, stringified to json, toml, and yaml to path', async () => {
         let formats = Object.keys(FairuFormat);
         for (let f of formats) {
             let results = await Fairu
@@ -454,7 +454,50 @@ describe('#write', () => {
 });
 
 describe('#append', () => {
-
+    afterAll((done) => {
+        //reset the writing folder back to starting point
+        fs.rm('./test/append/', { recursive: true })
+            .then(() => fs.mkdir('./test/append/'))
+            .then(() => fs.writeFile('./test/append/existing.txt', 'hello'))
+            .then(() => fs.writeFile('./test/append/obj.json', '//append me\n'))
+            .then(() => fs.writeFile('./test/append/obj.toml', '//append me\n'))
+            .then(() => fs.writeFile('./test/append/obj.yaml', '//append me\n'))
+            .then(() => done());
+    });
+    it('appends file contents to a file that already exists.', async () => {
+        let results = await Fairu.with('./test/append/existing.txt').append(' jupiter');
+        expect(results.length).toBe(1);
+        expect(results[0]).toBeInstanceOf(PathState);
+        let written = await fs.readFile('./test/append/existing.txt');
+        expect(written.toString()).toBe('hello jupiter');
+    });
+    it('appends file contents to a file that does not exist.', async () => {
+        let results = await Fairu.with('./test/append/kiwis.txt').append('jumping kiwis');
+        expect(results.length).toBe(1);
+        expect(results[0]).toBeInstanceOf(PathState);
+        let written = await fs.readFile('./test/append/kiwis.txt');
+        expect(written.toString()).toBe('jumping kiwis');
+    });
+    it('creates a directory path if does not exist.', async () => {
+        let results = await Fairu.with('./test/append/subdir/test/dir/').append();
+        expect(results.length).toBe(1);
+        expect(results[0]).toBeInstanceOf(PathState);
+        let stat = await fs.stat('./test/append/subdir/test/dir/');
+        expect(stat.isDirectory()).toBe(true);
+    });
+    it('appends an object, stringified to json, toml, and yaml to path', async () => {
+        let formats = Object.keys(FairuFormat);
+        for (let f of formats) {
+            let results = await Fairu
+                .with(`./test/append/obj.${f}`)
+                .format(f)
+                .append(testObject);
+            expect(results.length).toBe(1);
+            expect(results[0]).toBeInstanceOf(PathState);
+            let written = await fs.readFile(`./test/append/obj.${f}`);
+            expect(written.toString()).toBe('//append me\n' + Fairu.stringify(f, testObject));
+        }
+    });
 });
 
 describe('#touch', () => {

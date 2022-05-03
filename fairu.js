@@ -6,7 +6,6 @@ import toml from '@iarna/toml';
 import yaml from 'js-yaml';
 import PathState from './path-state.js';
 import ReadPathState from './read-path-state.js';
-import { match } from 'assert';
 
 /**
  * @callback FairuPathCallback
