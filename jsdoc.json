@@ -14,7 +14,8 @@
             "./node_modules",
             "./old",
             "./assets",
-            "./test"
+            "./test",
+            "./docs/"
         ],
         "includePattern": ".+\\.js(doc|x)?$",
         "excludePattern": "(^|\\/|\\\\)(_|.+\\.test\\.+)"
@@ -33,7 +34,7 @@
         "monospaceLinks": false
     },
     "metadata": {
-        "title": "AppKu: Fiaru",
+        "title": "AppKu: Fairu",
         "logo": "https://avatars.githubusercontent.com/u/76977527?s=400"
     }
 }

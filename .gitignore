@@ -12,8 +12,6 @@ rollup.*
 .dbeaver-data-sources.xml
 coverage/
 coverage/**/*
-docs/
-docs/**/*
 deploy/
 deploy/**/*
 dist/

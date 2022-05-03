@@ -1,4 +1,4 @@
-import Fairu, { FairuFormat } from './fairu.js';
+import Fairu from './fairu.js';
 import path from 'path';
 import fs from 'fs/promises';
 import PathState from './path-state.js';
@@ -27,23 +27,23 @@ describe('#constructor', () => {
 });
 
 describe('.stringify', () => {
-    it('throws on unknown format.', () => {
+    it('throws on unknown format', () => {
         expect(() => Fairu.stringify('bob', testObject)).toThrow('format');
     });
     it('stringifies to JSON.', () => {
-        expect(Fairu.stringify(FairuFormat.json, testObject)).toBe('{\n    "abc": 123,\n    "hello": "world",\n    "truth": false,\n    "zed": {\n        "ok": 3.14159\n    }\n}');
+        expect(Fairu.stringify(Fairu.Format.json, testObject)).toBe('{\n    "abc": 123,\n    "hello": "world",\n    "truth": false,\n    "zed": {\n        "ok": 3.14159\n    }\n}');
     });
     it('stringifies to JSON with different indent.', () => {
-        expect(Fairu.stringify(FairuFormat.json, testObject, 1)).toBe('{\n "abc": 123,\n "hello": "world",\n "truth": false,\n "zed": {\n  "ok": 3.14159\n }\n}');
+        expect(Fairu.stringify(Fairu.Format.json, testObject, 1)).toBe('{\n "abc": 123,\n "hello": "world",\n "truth": false,\n "zed": {\n  "ok": 3.14159\n }\n}');
     });
     it('stringifies to TOML.', () => {
-        expect(Fairu.stringify(FairuFormat.toml, testObject)).toBe('abc = 123\nhello = "world"\ntruth = false\n\n[zed]\nok = 3.14159\n');
+        expect(Fairu.stringify(Fairu.Format.toml, testObject)).toBe('abc = 123\nhello = "world"\ntruth = false\n\n[zed]\nok = 3.14159\n');
     });
     it('stringifies to YAML.', () => {
-        expect(Fairu.stringify(FairuFormat.yaml, testObject)).toBe('abc: 123\nhello: world\ntruth: false\nzed:\n    ok: 3.14159\n');
+        expect(Fairu.stringify(Fairu.Format.yaml, testObject)).toBe('abc: 123\nhello: world\ntruth: false\nzed:\n    ok: 3.14159\n');
     });
     it('stringifies to YAML with different indent.', () => {
-        expect(Fairu.stringify(FairuFormat.yaml, testObject, 1)).toBe('abc: 123\nhello: world\ntruth: false\nzed:\n ok: 3.14159\n');
+        expect(Fairu.stringify(Fairu.Format.yaml, testObject, 1)).toBe('abc: 123\nhello: world\ntruth: false\nzed:\n ok: 3.14159\n');
     });
 });
 
@@ -52,18 +52,18 @@ describe('.parse', () => {
         expect(() => Fairu.parse('bob', '')).toThrow('format');
     });
     it('throws on bad parse.', () => {
-        expect(() => Fairu.parse(FairuFormat.json, '{][][[--++')).toThrow();
-        expect(() => Fairu.parse(FairuFormat.toml, '{][][[--++')).toThrow();
-        expect(() => Fairu.parse(FairuFormat.yaml, '{][][[--++')).toThrow();
+        expect(() => Fairu.parse(Fairu.Format.json, '{][][[--++')).toThrow();
+        expect(() => Fairu.parse(Fairu.Format.toml, '{][][[--++')).toThrow();
+        expect(() => Fairu.parse(Fairu.Format.yaml, '{][][[--++')).toThrow();
     });
     it('parses JSON.', () => {
-        expect(Fairu.parse(FairuFormat.json, '{\n    "abc": 123,\n    "hello": "world",\n    "truth": false,\n    "zed": {\n        "ok": 3.14159\n    }\n}')).toMatchObject(testObject);
+        expect(Fairu.parse(Fairu.Format.json, '{\n    "abc": 123,\n    "hello": "world",\n    "truth": false,\n    "zed": {\n        "ok": 3.14159\n    }\n}')).toMatchObject(testObject);
     });
     it('parses TOML.', () => {
-        expect(Fairu.parse(FairuFormat.toml, 'abc = 123\nhello = "world"\ntruth = false\n\n[zed]\nok = 3.14159\n')).toMatchObject(testObject);
+        expect(Fairu.parse(Fairu.Format.toml, 'abc = 123\nhello = "world"\ntruth = false\n\n[zed]\nok = 3.14159\n')).toMatchObject(testObject);
     });
     it('parses YAML.', () => {
-        expect(Fairu.parse(FairuFormat.yaml, 'abc: 123\nhello: world\ntruth: false\nzed:\n    ok: 3.14159\n')).toMatchObject(testObject);
+        expect(Fairu.parse(Fairu.Format.yaml, 'abc: 123\nhello: world\ntruth: false\nzed:\n    ok: 3.14159\n')).toMatchObject(testObject);
     });
 });
 
@@ -213,7 +213,7 @@ describe('#format', () => {
             .format('json')
             .format('toml').metadata.format).toEqual('toml');
     });
-    it('throws error on unsupported format.', () => {
+    it('throws error on unsupported Fairu.Format.', () => {
         expect(() => new Fairu().format('butter')).toThrow(/format/);
         expect(() => new Fairu().format('text')).toThrow(/format/);
     });
@@ -376,7 +376,7 @@ describe('#read', () => {
         }
     });
     it('reads a json, yaml, and toml formatted file to an object.', async () => {
-        let formats = Object.keys(FairuFormat);
+        let formats = Object.keys(Fairu.Format);
         for (let f of formats) {
             let results = await Fairu
                 .with(`./test/read/format/valid.${f}`)
@@ -388,7 +388,7 @@ describe('#read', () => {
         }
     });
     it('throws an error when trying to read and parse an invalid json, yaml, and toml formatted file to an object.', () => {
-        let formats = Object.keys(FairuFormat);
+        let formats = Object.keys(Fairu.Format);
         for (let f of formats) {
             expect(Fairu
                 .with(`./test/read/format/invalid.${f}`)
@@ -397,7 +397,7 @@ describe('#read', () => {
         }
     });
     it('does not throw an error if the "throw" flag is disabled.', async () => {
-        let formats = Object.keys(FairuFormat);
+        let formats = Object.keys(Fairu.Format);
         for (let f of formats) {
             let results = await Fairu
                 .with(`./test/read/format/invalid.${f}`)
@@ -446,7 +446,7 @@ describe('#write', () => {
         expect(stat.isDirectory()).toBe(true);
     });
     it('writes an object, stringified to json, toml, and yaml to path with ensure.', async () => {
-        let formats = Object.keys(FairuFormat);
+        let formats = Object.keys(Fairu.Format);
         for (let f of formats) {
             let results = await Fairu
                 .with(`./test/write/obj.${f}`)
@@ -470,7 +470,7 @@ describe('#write', () => {
             .write()).rejects.toThrow(/ENOENT/);
     });
     it('fails to write an object, stringified to json, toml, and yaml to path without ensure.', async () => {
-        let formats = Object.keys(FairuFormat);
+        let formats = Object.keys(Fairu.Format);
         for (let f of formats) {
             expect(Fairu
                 .with(`./test/write/obj2.${f}`)
@@ -519,7 +519,7 @@ describe('#append', () => {
         expect(stat.isDirectory()).toBe(true);
     });
     it('appends an object, stringified to json, toml, and yaml to path with ensure.', async () => {
-        let formats = Object.keys(FairuFormat);
+        let formats = Object.keys(Fairu.Format);
         for (let f of formats) {
             let results = await Fairu
                 .with(`./test/append/obj.${f}`)
@@ -543,7 +543,7 @@ describe('#append', () => {
             .append()).rejects.toThrow(/ENOENT/);
     });
     it('fails to append an object, stringified to json, toml, and yaml to path without ensure.', async () => {
-        let formats = Object.keys(FairuFormat);
+        let formats = Object.keys(Fairu.Format);
         for (let f of formats) {
             expect(Fairu
                 .with(`./test/write/obj2.${f}`)
