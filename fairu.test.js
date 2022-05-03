@@ -1,5 +1,6 @@
 import Fairu, { FairuFormat } from './fairu.js';
 import path from 'path';
+import fs from 'fs/promises';
 import PathState from './path-state.js';
 import ReadPathState from './read-path-state.js';
 
@@ -262,11 +263,11 @@ describe('#_globFind', () => {
         expect(results.length).toBe(1);
         expect(results[0]).toBe(path.resolve(testPath));
     });
-    it('discovers a directory without a glob pattern.', async () => {
+    it('discovers a directory without a glob pattern and keeps the trailing slash.', async () => {
         let testPath = './test/read/';
         let results = await new Fairu()._globFind(testPath);
         expect(results.length).toBe(1);
-        expect(results[0]).toBe(path.resolve(testPath));
+        expect(results[0]).toBe(path.resolve(testPath) + path.sep);
     });
     it('ignores file(s) if it is excluded by ignore path/glob string(s).', async () => {
         let testPath = './test/read/sample-0.txt';
@@ -409,7 +410,47 @@ describe('#read', () => {
 });
 
 describe('#write', () => {
-
+    afterAll((done) => {
+        //reset the writing folder back to starting point
+        fs.rm('./test/write/', { recursive: true })
+            .then(() => fs.mkdir('./test/write/'))
+            .then(() => fs.writeFile('./test/write/existing.txt', 'I exist. Only write me if you want to overwrite.'))
+            .then(() => done());
+    });
+    it('writes file contents to a file that already exists.', async () => {
+        let results = await Fairu.with('./test/write/existing.txt').write('mars');
+        expect(results.length).toBe(1);
+        expect(results[0]).toBeInstanceOf(PathState);
+        let written = await fs.readFile('./test/write/existing.txt');
+        expect(written.toString()).toBe('mars');
+    });
+    it('writes file contents to a file that does not exist.', async () => {
+        let results = await Fairu.with('./test/write/bonkers.txt').write('hello world');
+        expect(results.length).toBe(1);
+        expect(results[0]).toBeInstanceOf(PathState);
+        let written = await fs.readFile('./test/write/bonkers.txt');
+        expect(written.toString()).toBe('hello world');
+    });
+    it('creates a directory path if does not exist.', async () => {
+        let results = await Fairu.with('./test/write/subdir/test/dir/').write();
+        expect(results.length).toBe(1);
+        expect(results[0]).toBeInstanceOf(PathState);
+        let stat = await fs.stat('./test/write/subdir/test/dir/');
+        expect(stat.isDirectory()).toBe(true);
+    });
+    it('writes an object, stringified json, toml, and yaml to path', async () => {
+        let formats = Object.keys(FairuFormat);
+        for (let f of formats) {
+            let results = await Fairu
+                .with(`./test/write/obj.${f}`)
+                .format(f)
+                .write(testObject);
+            expect(results.length).toBe(1);
+            expect(results[0]).toBeInstanceOf(PathState);
+            let written = await fs.readFile(`./test/write/obj.${f}`);
+            expect(written.toString()).toBe(Fairu.stringify(f, testObject));
+        }
+    });
 });
 
 describe('#append', () => {

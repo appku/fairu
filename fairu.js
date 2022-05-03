@@ -6,6 +6,7 @@ import toml from '@iarna/toml';
 import yaml from 'js-yaml';
 import PathState from './path-state.js';
 import ReadPathState from './read-path-state.js';
+import { match } from 'assert';
 
 /**
  * @callback FairuPathCallback
@@ -91,7 +92,7 @@ class Fairu {
      * Stringifies an object into the specified format (yaml, toml, or json).
      * @throws Error when the format is unknown.
      * @throws Error when stringification fails.
-     * @param {Util.format} format - Can be either 'json', 'yaml', or 'json'.
+     * @param {FairuFormat} format - Can be either 'json', 'yaml', or 'json'.
      * @param {*} object - The object to stringify.
      * @param {Number} [space=4] - The number of spaces to use for indentations.
      * @returns {String}
@@ -116,7 +117,7 @@ class Fairu {
      * Attempts to parse the given input string using the specified format parser into an object.
      * @throws Error when the format is unknown.
      * @throws Error when parsing fails.
-     * @param {Util.format} format - Can be either 'json', 'yaml', or 'json'.
+     * @param {FairuFormat} format - Can be either 'json', 'yaml', or 'json'.
      * @param {*} inputString - The string to be parsed.
      * @param {String} [filePath] - The file path used in error/warning messages.
      * @returns {*}
@@ -384,6 +385,7 @@ class Fairu {
      * @private
      */
     async _globFind(pattern, ignore) {
+        let hasDirTail = pattern.endsWith(path.sep);
         return await new Promise((resolve, reject) => {
             glob(pattern, Object.assign({}, this.options, {
                 ignore: ignore
@@ -391,6 +393,12 @@ class Fairu {
                 if (err) reject(err);
                 if (matches.length === 0 && glob.hasMagic(pattern, this.options) === false && (!ignore || Array.isArray(ignore) && ignore.length === 0)) {
                     matches.push(path.resolve(pattern));
+                }
+                if (hasDirTail) {
+                    //re-affix the directory seperater, as it was on the tail, thus only directories should be found.
+                    for (let i = 0; i < matches.length; i++) {
+                        matches[i] += path.sep;
+                    }
                 }
                 return resolve(matches);
             });
@@ -428,6 +436,7 @@ class Fairu {
                 state = new PathState(p);
                 state.operation = 'discover';
             }
+            let silenceENOENT = (['write', 'append'].indexOf(state.operation) >= 0);
             state.exists = true;
             try {
                 //gather dicey details
@@ -444,8 +453,11 @@ class Fairu {
                 state.error = err;
                 if (err.code === 'ENOENT') {
                     state.exists = false;
+                    if (silenceENOENT) {
+                        state.error = null;
+                    }
                 }
-                if (this.metadata.throw) {
+                if (this.metadata.throw && state.error) {
                     throw err;
                 }
             }
@@ -504,8 +516,48 @@ class Fairu {
         return states;
     }
 
+    /**
+     * Writes the specified content to the paths specified. If the file is already present, the content is
+     * overwritten.
+     * If the path is a directory, it will be created.
+     * 
+     * If a format was specified, the written data will be stringified into that format before being written.
+     * 
+     * If the file is in an errored state prior to the write, it is skipped.
+     * @param {String|Buffer} content - The content to be written to path.
+     * @returns {Array.<PathState>}
+     */
     async write(content) {
-        return this;
+        let states = await this.discover(tp => {
+            let ps = new PathState(tp);
+            ps.operation = 'write';
+            return ps;
+        });
+        for (let state of states) {
+            if (!state.error) { //skip paths in an errored state
+                try {
+                    if (state.path.endsWith(path.sep) || (state.stats && state.stats.isDirectory())) {
+                        await fs.mkdir(state.path, { recursive: true });
+                    } else {
+                        if (this.metadata.ensure) {
+                            fs.mkdirSync(path.dirname(state.path), { recursive: true });
+                        }
+                        if (this.metadata.format) {
+                            content = Fairu.stringify(this.metadata.format, content);
+                        }
+                        await fs.writeFile(state.path, content, {
+                            encoding: this.metadata.encoding
+                        });
+                    }
+                } catch (err) {
+                    state.error = err;
+                    if (this.metadata.throw) {
+                        throw err;
+                    }
+                }
+            }
+        }
+        return states;
     }
 
     async append(content) {
