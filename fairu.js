@@ -26,6 +26,14 @@ import ReadPathState from './read-path-state.js';
  */
 
 /**
+ * @callback Fairu.DiscoverErrorHandler
+ * @param {Error} err - The error being caught.
+ * @param {PathState} state - The state of discovery surrounding a particular path.
+ * @returns {Error} Return `null` to stop processing the error and don't throw, or return an Error object to continue
+ *   processing and possibly throw (if enabled).
+ */
+
+/**
  * @enum {String}
  */
 const FairuFormat = {
@@ -295,12 +303,12 @@ class Fairu {
     }
 
     /**
-     * Sets the flag to create any directories not found in a Fairu operation's path(s). If this flag is not 
-     * enabled (`false`) and the directory path does not exist, then the file operation will error.
+     * Sets the flag to create any directories not found in a Fairu operation's path(s). If this flag is 
+     * enabled (`true`) and the directory path does not exist, then the operation without failing with an error.
      * 
      * Calling this function without a `ensure` parameter argument will set the flag to `true`.
      * 
-     * This only has an effect on `write`, `append`, and `touch` operations.
+     * This only has an effect on `write`, `append`, `touch`, and 'delete' operations.
      * The `discover` and `read` operations *will not* attempt to ensure the path.
      * @throws Error when the `ensure` argument is not a boolean value.
      * @param {Boolean} [ensure=false] - If true, the directory path will be created if missing.
@@ -410,9 +418,10 @@ class Fairu {
      * @throws Error when the `throw` flag is true and an error discovering paths is encountered.
      * @throws Error when the "when" condition for the Fairu operation fails to return a boolean result.
      * @param {FairuPathStateCreateCallback} [create] - Optional callback that returns an initialized `PathState`.
+     * @param {Fairu.DiscoverErrorHandler} [handleError] - Optional callback to handle an error if it occurs. 
      * @returns {Promise.<Array.<PathState>>}
      */
-    async discover(create) {
+    async discover(create, handleError) {
         //de-glob
         let paths = [];
         for (let globPath of this.metadata.with) {
@@ -435,7 +444,6 @@ class Fairu {
                 state = new PathState(p);
                 state.operation = 'discover';
             }
-            let silenceENOENT = (['write', 'append', 'touch'].indexOf(state.operation) >= 0);
             state.exists = true;
             try {
                 //gather dicey details
@@ -450,14 +458,20 @@ class Fairu {
                 } catch (writeErr) { } // eslint-disable-line no-empty
             } catch (err) {
                 state.error = err;
-                if (err.code === 'ENOENT') {
-                    state.exists = false;
-                    if (silenceENOENT) {
-                        state.error = null;
-                    }
+                if (typeof handleError === 'function') {
+                    state.error = handleError(err, state);
                 }
-                if (this.metadata.throw && state.error) {
-                    throw err;
+                if (state.error) {
+                    if (err.code === 'ENOENT') {
+                        state.exists = false;
+                        if (this.metadata.ensure) {
+                            state.error = null;
+                        } else if (this.metadata.throw) {
+                            throw err;
+                        }
+                    } else if (this.metadata.throw) {
+                        throw err;
+                    }
                 }
             }
             if (this.metadata.when) {
@@ -602,7 +616,7 @@ class Fairu {
         return states;
 
     }
-    
+
     /**
      * Creates a blank file write or directory if the path does not exist, and ensures the directory tree is present.
      * 
@@ -611,15 +625,24 @@ class Fairu {
      * This is similar to using `ensure(true)` with `append(null)`. 
      * 
      * If the file is in an errored state prior to the write, it is skipped.
-     * @param {String|Buffer} content - The content to be written to path.
      * @returns {Promise.<Array.<PathState>>}
      */
     async touch() {
-        let states = await this.discover(tp => {
-            let ps = new PathState(tp);
-            ps.operation = 'touch';
-            return ps;
-        });
+        let states = await this.discover(
+            tp => {
+                let ps = new PathState(tp);
+                ps.operation = 'touch';
+                return ps;
+            },
+            (err, state) => {
+                if (err.code === 'ENOENT') {
+                    state.exists = false;
+                    state.error = null;
+                    return null;
+                }
+                return err;
+            }
+        );
         for (let state of states) {
             if (!state.error) { //skip paths in an errored state
                 try {
@@ -642,8 +665,35 @@ class Fairu {
         return states;
     }
 
+    /**
+     * Deletes the files and/or directories specified in the Fairu operation.
+     * 
+     * If the path is a directory, it is recursively deleted. 
+     * @returns {Promise.<Array.<PathState>>}
+     */
     async unlink() {
-        return this;
+        let states = await this.discover(tp => {
+            let ps = new PathState(tp);
+            ps.operation = 'delete';
+            return ps;
+        });
+        for (let state of states) {
+            if (!state.error) { //skip paths in an errored state
+                try {
+                    if (state.path.endsWith(path.sep) || (state.stats && state.stats.isDirectory())) {
+                        await fs.rm(state.path, { recursive: true });
+                    } else {
+                        await fs.unlink(state.path);
+                    }
+                } catch (err) {
+                    state.error = err;
+                    if (this.metadata.throw) {
+                        throw err;
+                    }
+                }
+            }
+        }
+        return states;
     }
 
 }
