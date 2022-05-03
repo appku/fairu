@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs/promises';
 import PathState from './path-state.js';
 import ReadPathState from './read-path-state.js';
+import { constants } from 'fs';
 
 const testObject = {
     abc: 123,
@@ -501,7 +502,38 @@ describe('#append', () => {
 });
 
 describe('#touch', () => {
-
+    afterAll((done) => {
+        //reset the writing folder back to starting point
+        fs.rm('./test/touch/', { recursive: true })
+            .then(() => fs.mkdir('./test/touch/'))
+            .then(() => fs.writeFile('./test/touch/existing.txt', 'I exist. Don\'t touch me!'))
+            .then(() => done());
+    });
+    it('touches a new file into existence.', async () => {
+        let results = await Fairu.with('./test/touch/new.txt').touch();
+        expect(results.length).toBe(1);
+        expect(results[0]).toBeInstanceOf(PathState);
+        expect(fs.access('./test/touch/new.txt', constants.R_OK)).resolves.toBeUndefined();
+    });
+    it('touches an existing file and marks modified time.', async () => {
+        let now = new Date().getTime();
+        let results = await Fairu.with('./test/touch/existing.txt').touch();
+        expect(results.length).toBe(1);
+        expect(results[0]).toBeInstanceOf(PathState);
+        let written = await fs.readFile('./test/touch/existing.txt');
+        expect(written.toString()).toBe('I exist. Don\'t touch me!');
+        let stat = await fs.stat('./test/touch/existing.txt');
+        expect(stat.atimeMs).toBeGreaterThan(now);
+    });
+    it('touches an existing directory and marks modified time.', async () => {
+        fs.mkdir('./test/touch/dir/');
+        let now = new Date().getTime();
+        let results = await Fairu.with('./test/touch/dir').touch();
+        expect(results.length).toBe(1);
+        expect(results[0]).toBeInstanceOf(PathState);
+        let stat = await fs.stat('./test/touch/dir/');
+        expect(Math.round(stat.atimeMs) + 1).toBeGreaterThan(now);
+    });
 });
 
 describe('#unlink', () => {

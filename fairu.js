@@ -606,6 +606,8 @@ class Fairu {
     /**
      * Creates a blank file write or directory if the path does not exist, and ensures the directory tree is present.
      * 
+     * The file access and modified time is updated on the path.
+     * 
      * This is similar to using `ensure(true)` with `append(null)`. 
      * 
      * If the file is in an errored state prior to the write, it is skipped.
@@ -621,14 +623,14 @@ class Fairu {
         for (let state of states) {
             if (!state.error) { //skip paths in an errored state
                 try {
+                    let stamp = new Date();
                     if (state.path.endsWith(path.sep) || (state.stats && state.stats.isDirectory())) {
                         await fs.mkdir(state.path, { recursive: true });
                     } else {
                         await fs.mkdir(path.dirname(state.path), { recursive: true });
-                        await fs.appendFile(state.path, Buffer.alloc(0), {
-                            encoding: this.metadata.encoding
-                        });
+                        await fs.appendFile(state.path, Buffer.alloc(0));
                     }
+                    await fs.utimes(state.path, stamp, stamp);
                 } catch (err) {
                     state.error = err;
                     if (this.metadata.throw) {
