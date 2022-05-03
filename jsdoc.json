@@ -1,0 +1,39 @@
+{
+    "plugins": [
+        "plugins/markdown",
+        "plugins/underscore",
+        "jsdoc-plugin-intersection",
+        "jsdoc-plugin-typescript",
+        "jsdoc-plugin-typescript-new"
+    ],
+    "source": {
+        "include": [
+            "./"
+        ],
+        "exclude": [
+            "./node_modules",
+            "./old",
+            "./assets",
+            "./test"
+        ],
+        "includePattern": ".+\\.js(doc|x)?$",
+        "excludePattern": "(^|\\/|\\\\)(_|.+\\.test\\.+)"
+    },
+    "typescript": {
+        "moduleRoot": "./"
+    },
+    "opts": {
+        "destination": "./docs/",
+        "recurse": true,
+        "template": "./node_modules/@appku/jsdoc-template",
+        "encoding": "utf8"
+    },
+    "templates": {
+        "cleverLinks": false,
+        "monospaceLinks": false
+    },
+    "metadata": {
+        "title": "AppKu: Fiaru",
+        "logo": "https://avatars.githubusercontent.com/u/76977527?s=400"
+    }
+}
