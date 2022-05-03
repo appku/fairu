@@ -436,7 +436,7 @@ class Fairu {
                 state = new PathState(p);
                 state.operation = 'discover';
             }
-            let silenceENOENT = (['write', 'append'].indexOf(state.operation) >= 0);
+            let silenceENOENT = (['write', 'append', 'touch'].indexOf(state.operation) >= 0);
             state.exists = true;
             try {
                 //gather dicey details
@@ -517,15 +517,14 @@ class Fairu {
     }
 
     /**
-     * Writes the specified content to the paths specified. If the file is already present, the content is
-     * overwritten.
+     * Writes the content to the paths specified. If the file is already present, the content is overwritten.
      * If the path is a directory, it will be created.
      * 
      * If a format was specified, the written data will be stringified into that format before being written.
      * 
      * If the file is in an errored state prior to the write, it is skipped.
      * @param {String|Buffer} content - The content to be written to path.
-     * @returns {Array.<PathState>}
+     * @returns {Promise.<Array.<PathState>>}
      */
     async write(content) {
         let states = await this.discover(tp => {
@@ -540,7 +539,7 @@ class Fairu {
                         await fs.mkdir(state.path, { recursive: true });
                     } else {
                         if (this.metadata.ensure) {
-                            fs.mkdirSync(path.dirname(state.path), { recursive: true });
+                            await fs.mkdir(path.dirname(state.path), { recursive: true });
                         }
                         if (this.metadata.format) {
                             content = Fairu.stringify(this.metadata.format, content);
@@ -560,12 +559,86 @@ class Fairu {
         return states;
     }
 
+    /**
+     * Appends the content to the paths specified. If the file does not exist, it is created.
+     * 
+     * If the path is a directory, it will be created.
+     * 
+     * If a format was specified, the written data will be stringified into that format before being written.
+     * 
+     * If the file is in an errored state prior to the write, it is skipped.
+     * @param {String|Buffer} content - The content to be written to path.
+     * @returns {Promise.<Array.<PathState>>}
+     */
     async append(content) {
+        let states = await this.discover(tp => {
+            let ps = new PathState(tp);
+            ps.operation = 'write';
+            return ps;
+        });
+        for (let state of states) {
+            if (!state.error) { //skip paths in an errored state
+                try {
+                    if (state.path.endsWith(path.sep) || (state.stats && state.stats.isDirectory())) {
+                        await fs.mkdir(state.path, { recursive: true });
+                    } else {
+                        if (this.metadata.ensure) {
+                            await fs.mkdir(path.dirname(state.path), { recursive: true });
+                        }
+                        if (this.metadata.format) {
+                            content = Fairu.stringify(this.metadata.format, content);
+                        }
+                        await fs.appendFile(state.path, content, {
+                            encoding: this.metadata.encoding
+                        });
+                    }
+                } catch (err) {
+                    state.error = err;
+                    if (this.metadata.throw) {
+                        throw err;
+                    }
+                }
+            }
+        }
+        return states;
 
     }
-
+    
+    /**
+     * Creates a blank file write or directory if the path does not exist, and ensures the directory tree is present.
+     * 
+     * This is similar to using `ensure(true)` with `append(null)`. 
+     * 
+     * If the file is in an errored state prior to the write, it is skipped.
+     * @param {String|Buffer} content - The content to be written to path.
+     * @returns {Promise.<Array.<PathState>>}
+     */
     async touch() {
-        return this;
+        let states = await this.discover(tp => {
+            let ps = new PathState(tp);
+            ps.operation = 'touch';
+            return ps;
+        });
+        for (let state of states) {
+            if (!state.error) { //skip paths in an errored state
+                try {
+                    if (state.path.endsWith(path.sep) || (state.stats && state.stats.isDirectory())) {
+                        await fs.mkdir(state.path, { recursive: true });
+                    } else {
+                        await fs.mkdir(path.dirname(state.path), { recursive: true });
+                        await fs.appendFile(state.path, Buffer.alloc(0), {
+                            encoding: this.metadata.encoding
+                        });
+                    }
+                } catch (err) {
+                    state.error = err;
+                    if (this.metadata.throw) {
+                        throw err;
+                    }
+                }
+            }
+        }
+        return states;
     }
 
     async unlink() {
