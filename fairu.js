@@ -9,6 +9,13 @@ import PathState from './path-state.js';
 import ReadPathState from './read-path-state.js';
 
 /**
+ * @see https://nodejs.org/api/path.html
+ * @callback FairuCallback.Path
+ * @param {path.PlatformPath} p - The path module for constructing file-system paths.
+ * @returns {String}
+ */
+
+/**
  * Fairu is a file-system reading & writing helper designed to simplify operations. It provides an asynchronous and
  * chained method interface to working with files that helps you focus less on file system operations, and more on
  * just getting things written and read reliably.
@@ -615,7 +622,7 @@ class Fairu {
                     }
                 }
             }
-        }
+        } let p = await import('path');p.basename
         return states;
     }
 

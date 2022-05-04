@@ -2,13 +2,6 @@
 /**
  * @namespace FairuCallback
  */
-
-/**
- * @callback FairuCallback.Path
- * @param {path} p - The path utility for constructing file-system paths.
- * @returns {String}
- */
-
 /**
  * @callback FairuCallback.Condition
  * @param {PathState} state - The state of the path as discovered by Fairu.

@@ -15,7 +15,8 @@
             "./old",
             "./assets",
             "./test",
-            "./docs/"
+            "./docs/",
+            "./fairu.jsdoc-ignore.d.js"
         ],
         "includePattern": ".+\\.js(doc|x)?$",
         "excludePattern": "(^|\\/|\\\\)(_|.+\\.test\\.+)"
