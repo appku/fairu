@@ -58,8 +58,10 @@ f.options = {
 
 You can find the full documentation on these options on the `glob` package's [README](https://github.com/isaacs/node-glob#options).
 
-# Code Documentation
-You can generate a static JSDoc site under the `docs/` path using the command `npm run docs`.
+# Documentation
+You can find examples and the fully published documentation at [appku.github.io/fairu](https://appku.github.io/fairu/).
+
+If you'd like to generate the documentation locally, you can do so by running `npm run docs` and the site will be statically generated under the `docs/` path.
 
 # Installing
 ```sh

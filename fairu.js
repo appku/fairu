@@ -1,3 +1,4 @@
+///<reference path="./fairu.d.js" />
 import path from 'path';
 import fs from 'fs/promises';
 import { constants } from 'fs';
@@ -8,29 +9,10 @@ import PathState from './path-state.js';
 import ReadPathState from './read-path-state.js';
 
 /**
- * @callback Fairu.PathCallback
- * @param {path} p - The path utility for constructing file-system paths.
+ * @see https://nodejs.org/api/path.html
+ * @callback FairuCallback.Path
+ * @param {path.PlatformPath} p - The path module for constructing file-system paths.
  * @returns {String}
- */
-
-/**
- * @callback Fairu.ConditionCallback
- * @param {PathState} state - The state of the path as discovered by Fairu.
- * @returns {Boolean}
- */
-
-/**
- * @callback Fairu.PathStateCreateCallback
- * @param {String} targetPath - The path utility for constructing file-system paths.
- * @returns {PathState}
- */
-
-/**
- * @callback Fairu.DiscoverErrorHandler
- * @param {Error} err - The error being caught.
- * @param {PathState} state - The state of discovery surrounding a particular path.
- * @returns {Error} Return `null` to stop processing the error and don't throw, or return an Error object to continue
- *   processing and possibly throw (if enabled).
  */
 
 /**
@@ -64,7 +46,7 @@ class Fairu {
              */
             without: [],
             /**
-             * @type {Fairu.ConditionCallback}
+             * @type {FairuCallback.Condition}
              */
             when: null,
             /**
@@ -170,25 +152,21 @@ class Fairu {
      * 
      * This function is not cummulative, specified paths will overwrite those set by a previous call.
      * @throws Error when a specified path is not a string or callback function.
-     * @param  {...String | Fairu.PathCallback} paths - The series of file-system paths or callback functions. 
+     * @param  {...String | FairuCallback.Path} paths - The series of file-system paths or callback functions. 
      * @returns {Fairu}
      * @example
-     * Daisy chaining multiple operations:
-     * ```js
+     * // Daisy chaining multiple operations:
      * await Fairu
      *   .with('./file1.txt', p => p.join('/home/', 'file2.txt'))
      *   .write(content)
      *   .with('./file3.txt')
      *   .write(otherContent);
-     * ```
      * 
      * @example
-     * Using glob paths:
-     * ```js
+     * // Using glob paths:
      * await Fairu
      *   .with('./**', './+(hello|greetings)?(world|mars|venus).txt')
      *   .read();
-     * ```
      */
     static with(...paths) {
         return new Fairu().with(...paths);
@@ -204,25 +182,21 @@ class Fairu {
      * 
      * This function is not cummulative, specified paths will overwrite those set by a previous call.
      * @throws Error when a specified path is not a string or callback function.
-     * @param  {...String | Fairu.PathCallback} paths - The series of file-system paths or callback functions. 
+     * @param  {...String | FairuCallback.Path} paths - The series of file-system paths or callback functions. 
      * @returns {Fairu}
      * @example
-     * Daisy chaining multiple operations:
-     * ```js
+     * // Daisy chaining multiple operations:
      * await Fairu
      *   .with('./file1.txt', p => p.join('/home/', 'file2.txt'))
      *   .write(content)
      *   .with('./file3.txt')
      *   .write(otherContent);
-     * ```
      * 
      * @example
-     * Using glob paths:
-     * ```js
+     * // Using glob paths:
      * await Fairu
      *   .with('./**', './+(hello|greetings)?(world|mars|venus).txt')
      *   .read();
-     * ```
      */
     with(...paths) {
         this.metadata.with = [];
@@ -248,16 +222,14 @@ class Fairu {
      * 
      * This function is not cummulative, specified paths will overwrite those set by a previous call.
      * @throws Error when a specified path is not a string or callback function.
-     * @param  {...String | Fairu.PathCallback} paths - The series of file-system paths or callback functions. 
+     * @param  {...String | FairuCallback.Path} paths - The series of file-system paths or callback functions. 
      * @returns {Fairu}
      * @example
-     * Skipping over certain files, in this case finding all `.js` files without `.test.` in the file name:
-     * ```js
+     * // Skipping over certain files, in this case finding all `.js` files without `.test.` in the file name:
      * Fairu.
      *   .with('./*.js')
      *   .without('./*.test.*')
      *   .discover();
-     * ```
      */
     without(...paths) {
         this.metadata.without = [];
@@ -373,18 +345,16 @@ class Fairu {
      * 
      * Calling this function without an argument or `null` will reset it to it's default (no conditional callback).
      * @throws Error when the specified conditions are not a callback function.
-     * @param {Fairu.ConditionCallback} conditions - Conditional flags indicating what states of the path must appear
+     * @param {FairuCallback.Condition} conditions - Conditional flags indicating what states of the path must appear
      *  to be true before proceeding with the operation for a path.
      * @returns {Fairu}
      * @example
-     * Discovering only paths that are writable with a minimum size of 1024 bytes.
-     * ```js
+     * // Discovering only paths that are writable with a minimum size of 1024 bytes.
      * let states = await Fairu
      *   .with('./*.js')
      *   .when(s => s.stats && s.stats.size > 1024 && s.writable)
      *   .discover();
      * console.log(states);
-     * ```
      */
     when(conditions) {
         let conditionsType = typeof conditions;
@@ -433,8 +403,8 @@ class Fairu {
      * ones.
      * @throws Error when the `throw` flag is true and an error discovering paths is encountered.
      * @throws Error when the "when" condition for the Fairu operation fails to return a boolean result.
-     * @param {Fairu.PathStateCreateCallback} [create] - Optional callback that returns an initialized `PathState`.
-     * @param {Fairu.DiscoverErrorHandler} [handleError] - Optional callback to handle an error if it occurs. 
+     * @param {FairuCallback.PathStateCreate} [create] - Optional callback that returns an initialized `PathState`.
+     * @param {FairuCallback.DiscoverErrorHandler} [handleError] - Optional callback to handle an error if it occurs. 
      * @returns {Promise.<Array.<PathState>>}
      */
     async discover(create, handleError) {
@@ -679,7 +649,7 @@ class Fairu {
                     }
                 }
             }
-        }
+        } let p = await import('path');p.basename
         return states;
     }
 

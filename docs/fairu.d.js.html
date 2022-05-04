@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>AppKu: Fairu: ReadPathState</title>
+    <title>AppKu: Fairu: fairu.d.js</title>
     
       <link type="text/css" rel="stylesheet" href="styles/vendor/prism-tomorrow-night.css">
     
@@ -31,257 +31,42 @@
 </header>
 
 
-<main class="layout-main ">
+<main class="layout-main  layout-content--source">
   <div class="container">
-    <p class="page-kind">Class</p>
-    <h1 class="page-title">ReadPathState</h1>
+    <p class="page-kind">source</p>
+    <h1 class="page-title">fairu.d.js</h1>
     
 
 
 
+    
 
 <section>
-
-
-<header class="class">
-
-
-    
-        
-        <!-- <h2>ReadPathState</h2> -->
-
-        
-            <h5>Extends</h5>
-            
-
-
-    <ul>
-        <li><a href="PathState.html">PathState</a></li>
-    </ul>
-
-
-
-        
-
-        
-
-        
-            
-            <div class="class-description"><p>The read results of the Fairu operation on a single path.</p></div>
-        
-    
-</header>
-
-<article>
-    <div class="container-overview">
-
-
-
-    
-        
-
-
-
-
-
-    
-
-
-    
-    <h3 class="subtitle">Constructor</h3>
-    
-
-    <div class="method-type">
-    
-    </div>
-
-    <h4 class="method-name" id="ReadPathState">new ReadPathState<span class="signature">()</span><span class="return-type-signature"></span>
-    </h4>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div class="details">
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <h4 class="method-heading">Source</h4>
-    <ul>
-        <li class="method-source">
-            <a href="read-path-state.js.html">read-path-state.js</a><a href="read-path-state.js.html#source.6">, line 6</a>
-        </li>
-    </ul>
-
-
-
-    
-    </div>
-
-    
-
-    
-
-     
-
-    
-
-    
-
-
-    
-        <h3 class="subtitle">Members</h3>
-
-        
-            
-
-<article class="member">
-    <div class="method-type">
-        
-    </div>
-<h4 class="member-name" id="data">data<span class="type-signature">*</span></h4>
-
-
-
-
-<div class="description">
-    <p>The data read from the file.</p>
-</div>
-
-
-
-    <h4>Type</h4>
-    <ul>
-        <li>
-            
-
-
-    <span class="param-type">
-        <code>*</code>
-    </span>
-    
-
-        </li>
-    </ul>
-
-
-
-
-
-<div class="details">
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</div>
-
-
-
-
-
-
-
-    <h4>Source</h4>
-    <ul>
-        <li class="method-source">
-            <a href="read-path-state.js.html">read-path-state.js</a><a href="read-path-state.js.html#source.15">, line 15</a>
-        </li>
-    </ul>
-
-
-</article>
-        
-    
-
-    
-
-    
-
-    
-</article>
-
+    <article>
+        <pre id="source" class="source-page line-numbers"><code class="language-js">
+/**
+ * @namespace FairuCallback
+ */
+/**
+ * @callback FairuCallback.Condition
+ * @param {PathState} state - The state of the path as discovered by Fairu.
+ * @returns {Boolean}
+ */
+
+/**
+ * @callback FairuCallback.PathStateCreate
+ * @param {String} targetPath - The path utility for constructing file-system paths.
+ * @returns {PathState}
+ */
+
+/**
+ * @callback FairuCallback.DiscoverErrorHandler
+ * @param {Error} err - The error being caught.
+ * @param {PathState} state - The state of discovery surrounding a particular path.
+ * @returns {Error} Return `null` to stop processing the error and don't throw, or return an Error object to continue
+ *   processing and possibly throw (if enabled).
+ */</code></pre>
+    </article>
 </section>
 
 
