@@ -411,12 +411,13 @@ describe('#read', () => {
 });
 
 describe('#write', () => {
-    afterAll((done) => {
-        //reset the writing folder back to starting point
-        fs.rm('./test/write/', { recursive: true })
-            .then(() => fs.mkdir('./test/write/'))
+    beforeAll((done) => {
+        fs.mkdir('./test/write/')
             .then(() => fs.writeFile('./test/write/existing.txt', 'I exist. Only write me if you want to overwrite.'))
-            .then(() => done());
+            .then(done);
+    });
+    afterAll((done) => {
+        fs.rm('./test/write/', { recursive: true }).then(done);
     });
     it('writes file contents to a file that already exists.', async () => {
         let results = await Fairu.with('./test/write/existing.txt').write('mars');
@@ -481,15 +482,16 @@ describe('#write', () => {
 });
 
 describe('#append', () => {
-    afterAll((done) => {
-        //reset the writing folder back to starting point
-        fs.rm('./test/append/', { recursive: true })
-            .then(() => fs.mkdir('./test/append/'))
+    beforeAll((done) => {
+        fs.mkdir('./test/append/')
             .then(() => fs.writeFile('./test/append/existing.txt', 'hello'))
             .then(() => fs.writeFile('./test/append/obj.json', '//append me\n'))
             .then(() => fs.writeFile('./test/append/obj.toml', '//append me\n'))
             .then(() => fs.writeFile('./test/append/obj.yaml', '//append me\n'))
-            .then(() => done());
+            .then(done);
+    });
+    afterAll((done) => {
+        fs.rm('./test/append/', { recursive: true }).then(done);
     });
     it('appends file contents to a file that already exists.', async () => {
         let results = await Fairu.with('./test/append/existing.txt').append(' jupiter');
@@ -554,12 +556,13 @@ describe('#append', () => {
 });
 
 describe('#touch', () => {
-    afterAll((done) => {
-        //reset the writing folder back to starting point
-        fs.rm('./test/touch/', { recursive: true })
-            .then(() => fs.mkdir('./test/touch/'))
+    beforeAll((done) => {
+        fs.mkdir('./test/touch/')
             .then(() => fs.writeFile('./test/touch/existing.txt', 'I exist. Don\'t touch me!'))
-            .then(() => done());
+            .then(done);
+    });
+    afterAll((done) => {
+        fs.rm('./test/touch/', { recursive: true }).then(done);
     });
     it('touches a new file into existence.', async () => {
         let results = await Fairu.with('./test/touch/new.txt').touch();
@@ -589,10 +592,8 @@ describe('#touch', () => {
 });
 
 describe('#unlink', () => {
-    afterAll((done) => {
-        //reset the writing folder back to starting point
-        fs.rm('./test/unlink/', { recursive: true })
-            .then(() => fs.mkdir('./test/unlink/empty', { recursive: true }))
+    beforeAll((done) => {
+        fs.mkdir('./test/unlink/empty', { recursive: true })
             .then(() => fs.mkdir('./test/unlink/subdir/dir', { recursive: true }))
             .then(() => fs.mkdir('./test/unlink/recurse/dir', { recursive: true }))
             .then(() => fs.writeFile('./test/unlink/sample-0.txt', 'lots of 00000s'))
@@ -604,7 +605,10 @@ describe('#unlink', () => {
             .then(() => fs.writeFile('./test/unlink/subdir/dir/2.toml', ''))
             .then(() => fs.writeFile('./test/unlink/recurse/sample.txt', 'i am toast'))
             .then(() => fs.writeFile('./test/unlink/recurse/dir/toast', 'no i am'))
-            .then(() => done());
+            .then(done);
+    });
+    afterAll((done) => {
+        fs.rm('./test/unlink/', { recursive: true }).then(done);
     });
     it('deletes a single file that exists.', async () => {
         await Fairu.with('./test/unlink/sample-0.txt').unlink();
@@ -625,5 +629,56 @@ describe('#unlink', () => {
         await Fairu.with('./test/unlink/recurse').unlink();
         expect(fs.stat('./test/unlink/recurse/sample.txt')).rejects.toThrow(/ENOENT/);
         expect(fs.stat('./test/unlink/recurse/dir/toast')).rejects.toThrow(/ENOENT/);
+    });
+});
+
+describe('.cp', () => {
+    beforeAll((done) => {
+        fs.mkdir('./test/cp/subdir/dir', { recursive: true })
+            .then(() => fs.writeFile('./test/cp/sample.txt', 'lots of 00000s'))
+            .then(() => fs.writeFile('./test/cp/subdir/nada.json', '{}'))
+            .then(() => fs.writeFile('./test/cp/subdir/dir/1.yaml', ''))
+            .then(() => fs.writeFile('./test/cp/subdir/dir/2.toml', ''))
+            .then(done);
+    });
+    afterAll((done) => {
+        fs.rm('./test/cp/', { recursive: true }).then(done);
+    });
+    it('copies a single file that exists.', async () => {
+        await fs.mkdir('./test/cp/target1');
+        await Fairu.cp('./test/cp/sample.txt', './test/cp/target1/sample.txt');
+        expect(fs.stat('./test/cp/target1/sample.txt')).resolves.toBeTruthy();
+    });
+    it('copies a directory recursively.', async () => {
+        await fs.mkdir('./test/cp/target2');
+        await Fairu.cp('./test/cp/subdir', './test/cp/target2/subdir');
+        expect(fs.stat('./test/cp/target2/subdir/nada.json')).resolves.toBeTruthy();
+        expect(fs.stat('./test/cp/target2/subdir/dir/1.yaml')).resolves.toBeTruthy();
+        expect(fs.stat('./test/cp/target2/subdir/dir/2.toml')).resolves.toBeTruthy();
+    });
+});
+
+describe('.mv', () => {
+    beforeAll((done) => {
+        fs.mkdir('./test/mv/subdir/dir', { recursive: true })
+            .then(() => fs.writeFile('./test/mv/sample.txt', 'lots of 00000s'))
+            .then(() => fs.writeFile('./test/mv/subdir/nada.json', '{}'))
+            .then(() => fs.writeFile('./test/mv/subdir/dir/1.yaml', ''))
+            .then(() => fs.writeFile('./test/mv/subdir/dir/2.toml', ''))
+            .then(done);
+    });
+    afterAll((done) => {
+        fs.rm('./test/mv/', { recursive: true }).then(done);
+    });
+    it('moves a single file that exists.', async () => {
+        await Fairu.mv('./test/mv/sample.txt', './test/mv/moved.txt');
+        expect(fs.stat('./test/mv/moved.txt')).resolves.toBeTruthy();
+        expect(fs.stat('./test/mv/sample.txt')).rejects.toThrow();
+    });
+    it('moves a directory.', async () => {
+        await Fairu.mv('./test/mv/subdir', './test/mv/target/subdir');
+        expect(fs.stat('./test/mv/target/subdir/nada.json')).resolves.toBeTruthy();
+        expect(fs.stat('./test/mv/target/subdir/dir/1.yaml')).resolves.toBeTruthy();
+        expect(fs.stat('./test/mv/target/subdir/dir/2.toml')).resolves.toBeTruthy();
     });
 });

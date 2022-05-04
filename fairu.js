@@ -136,6 +136,31 @@ class Fairu {
     }
 
     /**
+     * Copies a file or directory (recursively) to another.
+     * @param {String} source - The file or directory path to use as the source.
+     * @param {String} destination - The file or directory to use as the destination.
+     */
+    static async cp(source, destination) {
+        let stats = await fs.stat(source);
+        await fs.mkdir(path.dirname(destination), { recursive: true });
+        if (stats.isDirectory()) {
+            await fs.cp(source, destination, { recursive: true });
+        } else {
+            await fs.copyFile(source, destination);
+        }
+    }
+
+    /**
+     * Moves a file or directory (recursively) to another.
+     * @param {String} source - The file or directory path to use as the source.
+     * @param {String} destination - The file or directory to use as the destination.
+     */
+    static async mv(source, destination) {
+        await fs.mkdir(path.dirname(destination), { recursive: true });
+        await fs.rename(source, destination);
+    }
+
+    /**
      * Specify the file-system paths (including glob patterns) you will be performing an operation on. You may
      * optionally provide a callback that returns a path to use- the callback will be passed the `path` module as an
      * argument.
@@ -294,7 +319,7 @@ class Fairu {
     }
 
     /**
-     * Sets the flag to create any directories not found in a Fairu operation's path(s). If this flag is 
+     * Sets the flag to create any directories not found in the discovered `.with` paths. If this flag is 
      * enabled (`true`) and the directory path does not exist, then the operation without failing with an error.
      * 
      * Calling this function without a `ensure` parameter argument will set the flag to `true`.
@@ -480,7 +505,7 @@ class Fairu {
     }
 
     /**
-     * Reads from all file-system paths specified in the Fairu operation.
+     * Reads from all paths discovered from the specified `.with` paths.
      * Directories will return data that is the top-level list of files and directories they contain. 
      * Files and other types will return the data read in the form of a `Buffer` unless a `format` was specified.
      * 
@@ -647,7 +672,9 @@ class Fairu {
                     await fs.utimes(state.path, stamp, stamp);
                 } catch (err) {
                     state.error = err;
-                    if (this.metadata.throw) {
+                    if (err.code === 'ENOENT') {
+                        state.exists = false;
+                    } else if (this.metadata.throw) {
                         throw err;
                     }
                 }
@@ -657,7 +684,7 @@ class Fairu {
     }
 
     /**
-     * Deletes the files and/or directories specified in the Fairu operation.
+     * Deletes the files and/or directories discovered from the `.with` paths.
      * 
      * If the path is a directory, it is recursively deleted. 
      * @returns {Promise.<Array.<PathState>>}
@@ -665,7 +692,7 @@ class Fairu {
     async unlink() {
         let states = await this.discover(tp => {
             let ps = new PathState(tp);
-            ps.operation = 'delete';
+            ps.operation = 'unlink';
             return ps;
         });
         for (let state of states) {
