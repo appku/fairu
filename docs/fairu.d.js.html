@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>AppKu: Fairu: path-state.js</title>
+    <title>AppKu: Fairu: fairu.d.js</title>
     
       <link type="text/css" rel="stylesheet" href="styles/vendor/prism-tomorrow-night.css">
     
@@ -34,7 +34,7 @@
 <main class="layout-main  layout-content--source">
   <div class="container">
     <p class="page-kind">source</p>
-    <h1 class="page-title">path-state.js</h1>
+    <h1 class="page-title">fairu.d.js</h1>
     
 
 
@@ -43,63 +43,36 @@
 
 <section>
     <article>
-        <pre id="source" class="source-page line-numbers"><code class="language-js">import fs from 'fs/promises';
-import {Stats} from 'fs';
+        <pre id="source" class="source-page line-numbers"><code class="language-js">
+/**
+ * @namespace FairuCallback
+ */
 
 /**
- * This class stores flags about the state of a path (file or directory or other...) when being evaluated by Fairu.
+ * @callback FairuCallback.Path
+ * @param {path} p - The path utility for constructing file-system paths.
+ * @returns {String}
  */
-class PathState {
-    /**
-     * Creates a new `PathState` instance.
-     * @param {String} targetPath - The file-system path being represented.
-     */
-    constructor(targetPath) {
 
-        /**
-         * @type {String}
-         */
-        this.path = targetPath;
+/**
+ * @callback FairuCallback.Condition
+ * @param {PathState} state - The state of the path as discovered by Fairu.
+ * @returns {Boolean}
+ */
 
-        /**
-         * Indicates the file or directory appears to exist.
-         * @type {Boolean}
-         */
-        this.exists = false;
+/**
+ * @callback FairuCallback.PathStateCreate
+ * @param {String} targetPath - The path utility for constructing file-system paths.
+ * @returns {PathState}
+ */
 
-        /**
-         * Indicates the file or directory appears to be readable.
-         * @type {Boolean}
-         */
-        this.readable = false;
-
-        /**
-         * Indicates the file or directory appears to be writable.
-         * @type {Boolean}
-         */
-        this.writable = false;
-
-        /**
-         * The Fairu operation in action, can be: "read", "write", "append", "touch", or "unlink".
-         * @type {String}
-         */
-        this.operation = null;
-
-        /**
-         * The last error that occurred during the Fairu operation.
-         * @type {Error}
-         */
-        this.error = null;
-
-        /**
-         * @type {Stats}
-         */
-        this.stats = null;
-        
-    }
-}
-
-export default PathState;</code></pre>
+/**
+ * @callback FairuCallback.DiscoverErrorHandler
+ * @param {Error} err - The error being caught.
+ * @param {PathState} state - The state of discovery surrounding a particular path.
+ * @returns {Error} Return `null` to stop processing the error and don't throw, or return an Error object to continue
+ *   processing and possibly throw (if enabled).
+ */</code></pre>
     </article>
 </section>
 
