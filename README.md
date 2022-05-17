@@ -7,11 +7,15 @@ Fairu is designed to be usable through a series of chained methods. These method
 
 Your Fairu usage should almost always begin with a `.with` call to specify the paths (which may be [glob](https://github.com/isaacs/node-glob) patterns). You then can follow up with methods to define how Fairu will behave, such as specifying `.throw(false)` to have Fairu avoid throwing errors and instead continue processing.
 
+### Returned Value
+In Fairu operations (`discover`, `touch`, `read`, `write`, `delete`) the returned value will be a promise of an `Array` of `PathState` objects. 
+
 ### Example Discovering Files
 ```js
 let found = await Fairu
     .with('./**/*')
     .discover();
+//found = [...PathState]
 ```
 
 ### Example Reading Files
@@ -20,6 +24,7 @@ let readFiles = await Fairu
     .with('./path/to/files.*')
     .throw(false)
     .read();
+//found = [...ReadPathState]
 ```
 
 ### Example Writing Files
@@ -27,6 +32,7 @@ let readFiles = await Fairu
 let writeResults = await Fairu
     .with('./hello.txt')
     .write('hello world!');
+//found = [...PathState]
 ```
 
 ### Example Appending Files
@@ -34,6 +40,7 @@ let writeResults = await Fairu
 let appendResults = await Fairu
     .with('./hello.txt', 'only-mars.txt')
     .append('\nalso, hello Mars!');
+//found = [...PathState]
 ```
 
 ### Example Touching Files
@@ -41,6 +48,7 @@ let appendResults = await Fairu
 let writeResults = await Fairu
     .with('./hello.txt')
     .touch();
+//found = [...PathState]
 ```
 
 # Configuration
