@@ -24,7 +24,7 @@
         "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --verbose --coverage",
         "test-ci": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --verbose -ci",
         "lint": "npx eslint ./",
-        "docs": "npx jsdoc -c jsdoc.json --readme README.md",
+        "docs": "npx jsdoc -c jsdoc.json -u tutorials --readme README.md",
         "serve-docs": "npx serve ./docs"
     },
     "jest": {
@@ -42,7 +42,7 @@
         "js-yaml": "^4.1.0"
     },
     "devDependencies": {
-        "@appku/jsdoc-template": "^1.0.2",
+        "@appku/jsdoc-template": "^1.1.2",
         "@types/jest": "^27.4.1",
         "eslint": "^8.13.0",
         "eslint-plugin-jest": "^26.1.4",

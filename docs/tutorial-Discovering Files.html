@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>AppKu: Fairu: fairu.d.js</title>
+    <title>AppKu: Fairu: Tutorial: Discovering Files</title>
     
       <link type="text/css" rel="stylesheet" href="styles/vendor/prism-tomorrow-night.css">
     
@@ -41,46 +41,40 @@
 </header>
 
 
-<main class="layout-main  layout-content--source">
+<main class="layout-main ">
   <div class="container">
-    <p class="page-kind">source</p>
-    <h1 class="page-title">fairu.d.js</h1>
-    
+    <p class="page-kind"></p>
+    <h1 class="page-title">Tutorial: Discovering Files</h1>
+    <section>
 
+<article>
+    <h2>Description</h2>
+<p>Fairu allows you to quickly discover files in one or multiple paths, and supports glob patterns. In the following
+examples, we will presume that the following directory structure is present:</p>
+<pre class="prettyprint source"><code> | test/
+ - - file1.txt
+ - - file2.txt
+ - - markdown.md
+ - | buildings/
+ - - - warehouse.html
+ - | houses/
+ - - - index.html
+ - - - house.png
+ - root.mp3
+</code></pre>
+<h4>Discovering files in a specific path.</h4>
+<pre class="prettyprint source lang-js"><code>let found = await Fairu
+    .with('./test/')
+    .discover();
+</code></pre>
+<h4>Discovering files in a multiple paths.</h4>
+<pre class="prettyprint source lang-js"><code>let found = await Fairu
+    .with('./test/buildings/', './test/houses/')
+    .discover();
+</code></pre>
+</article>
 
-
-    
-
-<section>
-    <article>
-        <pre id="source" class="source-page line-numbers"><code class="language-js">
-/**
- * @namespace FairuCallback
- */
-/**
- * @callback FairuCallback.Condition
- * @param {PathState} state - The state of the path as discovered by Fairu.
- * @returns {Boolean}
- */
-
-/**
- * @callback FairuCallback.PathStateCreate
- * @param {String} targetPath - The path utility for constructing file-system paths.
- * @returns {PathState}
- */
-
-/**
- * @callback FairuCallback.DiscoverErrorHandler
- * @param {Error} err - The error being caught.
- * @param {PathState} state - The state of discovery surrounding a particular path.
- * @returns {Error} Return `null` to stop processing the error and don't throw, or return an Error object to continue
- *   processing and possibly throw (if enabled).
- */</code></pre>
-    </article>
 </section>
-
-
-
 
   </div>
 </main>

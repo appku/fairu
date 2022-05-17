@@ -1,6 +1,8 @@
-# Fairu
+# @AppKu/Fairu
 Fairu is an asynchronous utility library that provides fast and reliable file-system operations that can be daisy chained together and leverage glob patterns, and serialization to toml, json, and yaml.
-This is a utility library for the AppKu ecosystem which provides file and directory read/write operations for regular, YAML, TOML, and env files.
+This is a library built within the [AppKu](https://github.com/appku) ecosystem of tools and utilities to help build apps. Specifically Fairu provides file and directory read/write operations for regular, YAML, TOML, and env files.
+
+You can find formal [documentation here](https://appku.github.io/fairu/).
 
 # Usage
 Fairu is designed to be usable through a series of chained methods. These methods define how Fairu will perform the final action, either discovery, reading, writing, appending, touching, or unlinking. 
