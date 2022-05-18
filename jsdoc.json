@@ -8,7 +8,8 @@
     ],
     "source": {
         "include": [
-            "./"
+            "./",
+            "./package.json"
         ],
         "exclude": [
             "./node_modules",
@@ -38,8 +39,14 @@
         "title": "@AppKu/Fairu",
         "logo": "https://avatars.githubusercontent.com/u/76977527?s=400",
         "links": [
-            { "icon": "globe", "url": "https://appku.com" },
-            { "icon": "github", "url": "https://github.com/appku/fairu" }
+            {
+                "icon": "globe",
+                "url": "https://appku.com"
+            },
+            {
+                "icon": "github",
+                "url": "https://github.com/appku/fairu"
+            }
         ]
     }
 }

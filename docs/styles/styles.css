@@ -6768,9 +6768,9 @@
   --nav-title-color: var(--primary-color);
   --nav-title-align: center;
   --nav-title-size: 1rem;
-  --nav-title-margin-bottom: 1.5em;
+  --nav-title-margin-bottom: 1rem;
   --nav-title-font-weight: 600;
-  --nav-list-margin-left: 2em;
+  --nav-list-margin-left: 1rem;
   --nav-bg-color: #fff;
   --nav-heading-display: block;
   --nav-heading-color: #aaa;
@@ -6897,10 +6897,16 @@ code {
 }
 .layout-header h1 {
   display: block;
-  margin-bottom: var(--nav-title-margin-bottom);
   font-size: var(--nav-title-size);
   font-weight: var(--nav-title-font-weight);
   text-align: var(--nav-title-align);
+  margin: 0;
+}
+.layout-header h2 {
+  font-size: var(--nav-title-size);
+  text-align: var(--nav-title-align);
+  color: var(--subheading-color);
+  margin: 0;
 }
 .layout-header img {
   max-width: 120px;
@@ -6909,6 +6915,7 @@ code {
 }
 
 .layout-nav {
+  margin-top: 2rem;
   margin-bottom: 2rem;
 }
 .layout-nav ul {
@@ -6943,6 +6950,7 @@ ul.meta-links {
   list-style: none;
   text-align: center;
   padding: 0;
+  margin-bottom: 0;
 }
 .meta-links li,
 ul.meta-links li {
