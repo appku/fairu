@@ -6791,7 +6791,7 @@
   --nav-type-module-bg: #f2e4f7;
   --nav-type-event-color: #948b34;
   --nav-type-event-bg: #fff6a6;
-  --max-content-width: 900px;
+  --max-content-width: 1024px;
   --nav-width: 320px;
   --padding-unit: 30px;
   --layout-footer-color: #aaa;
@@ -6924,15 +6924,17 @@ code {
 }
 .layout-nav li {
   list-style-type: none;
-  font-size: 0.95em;
+  font-size: 1rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .layout-nav li.nav-heading:first-child {
   display: var(--nav-heading-display);
-  margin-left: 0;
-  margin-bottom: 1em;
+  margin-bottom: 0.5rem;
   text-transform: uppercase;
   color: var(--nav-heading-color);
-  font-size: 0.85em;
+  font-size: 1rem;
 }
 .layout-nav a {
   color: var(--nav-link-color);
@@ -6968,7 +6970,7 @@ ul.nav-introduction {
 }
 
 .nav-heading {
-  margin-top: 1em;
+  margin-top: 1rem;
   font-weight: 500;
 }
 .nav-heading a {
