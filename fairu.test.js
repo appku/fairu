@@ -18,9 +18,8 @@ describe('#constructor', () => {
             with: [],
             without: [],
             when: null,
-            throw: true,
+            throw: false,
             format: null,
-            ensure: false,
             encoding: null
         });
     });
@@ -175,30 +174,6 @@ describe('#throw', () => {
     });
 });
 
-describe('#ensure', () => {
-    it('returns a Fairu instance.', () => expect(new Fairu().ensure(true)).toBeInstanceOf(Fairu));
-    it('sets the metadata "ensure" value.', () => {
-        expect(new Fairu().ensure(false).metadata.ensure).toEqual(false);
-        expect(new Fairu().ensure(true).metadata.ensure).toEqual(true);
-    });
-    it('sets the metadata "ensure" value to true when undefined.', () => {
-        expect(new Fairu().ensure(false).ensure().metadata.ensure).toBe(true);
-    });
-    it('calls multiple times overwrite previous.', () => {
-        expect(new Fairu()
-            .ensure(false)
-            .ensure(true).metadata.ensure).toEqual(true);
-    });
-    it('throws error on specified invalid argument value type.', () => {
-        expect(() => new Fairu().ensure(null)).toThrow(/ensure/);
-        expect(() => new Fairu().ensure('hello')).toThrow(/ensure/);
-        expect(() => new Fairu().ensure(1234)).toThrow(/ensure/);
-        expect(() => new Fairu().ensure(new Date())).toThrow(/ensure/);
-        expect(() => new Fairu().ensure(Infinity)).toThrow(/ensure/);
-        expect(() => new Fairu().ensure(NaN)).toThrow(/ensure/);
-    });
-});
-
 describe('#format', () => {
     it('returns a Fairu instance.', () => expect(new Fairu().format('json')).toBeInstanceOf(Fairu));
     it('sets the metadata "format" value.', () => {
@@ -314,7 +289,7 @@ describe('#discover', () => {
         expect(results[6].readable).toBe(false);
         expect(results[6].writable).toBe(false);
         expect(results[6].operation).toBe('discover');
-        expect(results[6].error).not.toBeNull();
+        expect(results[6].error).toBeNull();
         expect(results[6].stats).toBeNull();
     });
     it('applies "when" conditions to limit results.', async () => {
@@ -340,13 +315,10 @@ describe('#discover', () => {
         expect(results.length).toBe(1);
         expect(results[0].operation).toBe('monkeys');
     });
-    it('throws an error if the flag to throw is set (default).', () => {
+    it('throws an error if the flag to throw is set.', () => {
         expect(Fairu
             .with('./test/read/**/*.txt', './test/doesntexist')
-            .discover()).rejects.toThrow(/ENOENT/);
-        expect(Fairu
-            .with('./test/read/**/*.txt', './test/doesntexist')
-            .throw(true)
+            .throw()
             .discover()).rejects.toThrow(/ENOENT/);
     });
     it('throws an error if the when condition fails to return a boolean.', () => {
@@ -392,6 +364,7 @@ describe('#read', () => {
         for (let f of formats) {
             expect(Fairu
                 .with(`./test/read/format/invalid.${f}`)
+                .throw(true)
                 .format(f)
                 .read()).rejects.toThrow();
         }
@@ -426,57 +399,35 @@ describe('#write', () => {
         let written = await fs.readFile('./test/write/existing.txt');
         expect(written.toString()).toBe('mars');
     });
-    it('writes file contents to a file that does not exist with ensure.', async () => {
+    it('writes file contents to a file that does not exist.', async () => {
         let results = await Fairu
             .with('./test/write/bonkers.txt')
-            .ensure()
             .write('hello world');
         expect(results.length).toBe(1);
         expect(results[0]).toBeInstanceOf(PathState);
         let written = await fs.readFile('./test/write/bonkers.txt');
         expect(written.toString()).toBe('hello world');
     });
-    it('creates a directory path if does not exist with ensure.', async () => {
+    it('creates a directory path if does not exist.', async () => {
         let results = await Fairu
             .with('./test/write/subdir/test/dir/')
-            .ensure()
             .write();
         expect(results.length).toBe(1);
         expect(results[0]).toBeInstanceOf(PathState);
         let stat = await fs.stat('./test/write/subdir/test/dir/');
         expect(stat.isDirectory()).toBe(true);
     });
-    it('writes an object, stringified to json, toml, and yaml to path with ensure.', async () => {
+    it('writes an object, stringified to json, toml, and yaml to path.', async () => {
         let formats = Object.keys(Fairu.Format);
         for (let f of formats) {
             let results = await Fairu
                 .with(`./test/write/obj.${f}`)
                 .format(f)
-                .ensure()
                 .write(testObject);
             expect(results.length).toBe(1);
             expect(results[0]).toBeInstanceOf(PathState);
             let written = await fs.readFile(`./test/write/obj.${f}`);
             expect(written.toString()).toBe(Fairu.stringify(f, testObject));
-        }
-    });
-    it('fails to write file contents to a file that does not exist without ensure.', () => {
-        expect(Fairu
-            .with('./test/write/bonkers2.txt')
-            .write('hello world')).rejects.toThrow(/ENOENT/);
-    });
-    it('fails to create a directory path if does not exist without ensure.', () => {
-        expect(Fairu
-            .with('./test/write/subdir/test/dir2/')
-            .write()).rejects.toThrow(/ENOENT/);
-    });
-    it('fails to write an object, stringified to json, toml, and yaml to path without ensure.', async () => {
-        let formats = Object.keys(Fairu.Format);
-        for (let f of formats) {
-            expect(Fairu
-                .with(`./test/write/obj2.${f}`)
-                .format(f)
-                .write(testObject)).rejects.toThrow(/ENOENT/);
         }
     });
 });
@@ -500,57 +451,35 @@ describe('#append', () => {
         let written = await fs.readFile('./test/append/existing.txt');
         expect(written.toString()).toBe('hello jupiter');
     });
-    it('appends file contents to a file that does not exist with ensure.', async () => {
+    it('appends file contents to a file that does not exist.', async () => {
         let results = await Fairu
             .with('./test/append/kiwis.txt')
-            .ensure()
             .append('jumping kiwis');
         expect(results.length).toBe(1);
         expect(results[0]).toBeInstanceOf(PathState);
         let written = await fs.readFile('./test/append/kiwis.txt');
         expect(written.toString()).toBe('jumping kiwis');
     });
-    it('creates a directory path if does not exist with ensure.', async () => {
+    it('creates a directory path if does not exist.', async () => {
         let results = await Fairu
             .with('./test/append/subdir/test/dir/')
-            .ensure()
             .append();
         expect(results.length).toBe(1);
         expect(results[0]).toBeInstanceOf(PathState);
         let stat = await fs.stat('./test/append/subdir/test/dir/');
         expect(stat.isDirectory()).toBe(true);
     });
-    it('appends an object, stringified to json, toml, and yaml to path with ensure.', async () => {
+    it('appends an object, stringified to json, toml, and yaml to path.', async () => {
         let formats = Object.keys(Fairu.Format);
         for (let f of formats) {
             let results = await Fairu
                 .with(`./test/append/obj.${f}`)
                 .format(f)
-                .ensure()
                 .append(testObject);
             expect(results.length).toBe(1);
             expect(results[0]).toBeInstanceOf(PathState);
             let written = await fs.readFile(`./test/append/obj.${f}`);
             expect(written.toString()).toBe('//append me\n' + Fairu.stringify(f, testObject));
-        }
-    });
-    it('fails to append file contents to a file that does not exist without ensure.', () => {
-        expect(Fairu
-            .with('./test/write/bonkers2.txt')
-            .append('hello world')).rejects.toThrow(/ENOENT/);
-    });
-    it('fails to create a directory path if does not exist without ensure.', () => {
-        expect(Fairu
-            .with('./test/write/subdir/test/dir2/')
-            .append()).rejects.toThrow(/ENOENT/);
-    });
-    it('fails to append an object, stringified to json, toml, and yaml to path without ensure.', async () => {
-        let formats = Object.keys(Fairu.Format);
-        for (let f of formats) {
-            expect(Fairu
-                .with(`./test/write/obj2.${f}`)
-                .format(f)
-                .append(testObject)).rejects.toThrow(/ENOENT/);
         }
     });
 });

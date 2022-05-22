@@ -52,15 +52,11 @@ class Fairu {
             /**
              * @type {Boolean}
              */
-            throw: true,
+            throw: false,
             /**
              * @type {String}
              */
             format: null,
-            /**
-             * @type {Boolean}
-             */
-            ensure: false,
             /**
              * @type {String}
              */
@@ -291,28 +287,6 @@ class Fairu {
     }
 
     /**
-     * Sets the flag to create any directories not found in the discovered `.with` paths. If this flag is 
-     * enabled (`true`) and the directory path does not exist, then the operation without failing with an error.
-     * 
-     * Calling this function without a `ensure` parameter argument will set the flag to `true`.
-     * 
-     * This only has an effect on `write`, `append`, `touch`, and 'delete' operations.
-     * The `discover` and `read` operations *will not* attempt to ensure the path.
-     * @throws Error when the `ensure` argument is not a boolean value.
-     * @param {Boolean} [ensure=false] - If true, the directory path will be created if missing.
-     * @returns {Fairu}
-     */
-    ensure(ensure) {
-        if (typeof ensure === 'undefined') {
-            ensure = true;
-        } else if (typeof ensure !== 'boolean') {
-            throw new Error('The "ensure" argument must be a boolean.');
-        }
-        this.metadata.ensure = ensure || false;
-        return this;
-    }
-
-    /**
      * Enables formatting of written or read objects or data to the specified format, either: "json", "toml", or
      * "yaml". You may also ensure raw bufferred reads or writes by passing a `null` argument to clear the setting.
      * By default the format is not set.
@@ -450,10 +424,10 @@ class Fairu {
                 if (state.error) {
                     if (err.code === 'ENOENT') {
                         state.exists = false;
-                        if (this.metadata.ensure) {
-                            state.error = null;
-                        } else if (this.metadata.throw) {
+                        if (this.metadata.throw) {
                             throw err;
+                        } else {
+                            state.error = null;
                         }
                     } else if (this.metadata.throw) {
                         throw err;
@@ -537,9 +511,7 @@ class Fairu {
                     if (state.path.endsWith(path.sep) || (state.stats && state.stats.isDirectory())) {
                         await fs.mkdir(state.path, { recursive: true });
                     } else {
-                        if (this.metadata.ensure) {
-                            await fs.mkdir(path.dirname(state.path), { recursive: true });
-                        }
+                        await fs.mkdir(path.dirname(state.path), { recursive: true });
                         if (this.metadata.format) {
                             content = Fairu.stringify(this.metadata.format, content);
                         }
@@ -581,9 +553,7 @@ class Fairu {
                     if (state.path.endsWith(path.sep) || (state.stats && state.stats.isDirectory())) {
                         await fs.mkdir(state.path, { recursive: true });
                     } else {
-                        if (this.metadata.ensure) {
-                            await fs.mkdir(path.dirname(state.path), { recursive: true });
-                        }
+                        await fs.mkdir(path.dirname(state.path), { recursive: true });
                         if (this.metadata.format) {
                             content = Fairu.stringify(this.metadata.format, content);
                         }
@@ -607,8 +577,6 @@ class Fairu {
      * Creates a blank file write or directory if the path does not exist, and ensures the directory tree is present.
      * 
      * The file access and modified time is updated on the path.
-     * 
-     * This is similar to using `ensure(true)` with `append(null)`. 
      * 
      * If the file is in an errored state prior to the write, it is skipped.
      * @returns {Promise.<Array.<PathState>>}
@@ -649,7 +617,7 @@ class Fairu {
                     }
                 }
             }
-        } let p = await import('path');p.basename
+        } let p = await import('path'); p.basename
         return states;
     }
 
