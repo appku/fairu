@@ -6824,6 +6824,14 @@ a:hover, a:focus, a:active {
   color: var(--link-hover-color);
 }
 
+blockquote {
+  border-left: 1rem solid var(--light-font-color);
+  padding-left: 1rem;
+  margin: 2rem 0;
+  font-style: italic;
+  color: var(--light-font-color);
+}
+
 img {
   max-width: 100%;
 }
