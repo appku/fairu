@@ -1,6 +1,8 @@
 ///<reference path="./fairu.d.js" />
+///<reference path="./package-json.d.js" />
 import path from 'path';
 import fs from 'fs/promises';
+import fsSync from 'fs';
 import { constants } from 'fs';
 import glob from 'glob';
 import toml from '@iarna/toml';
@@ -62,6 +64,15 @@ class Fairu {
              */
             encoding: null
         };
+    }
+
+    /**
+     * Reads a `package.json` file from the given directory. This operation is synchronous.
+     * @param {String} dir - The directory of the `package.json` file.
+     * @returns {PackageJSON}
+     */
+    static packageJSON(dir) {
+        return JSON.parse(fsSync.readFileSync(path.join(dir, 'package.json')));
     }
 
     /**
@@ -617,7 +628,7 @@ class Fairu {
                     }
                 }
             }
-        } let p = await import('path'); p.basename
+        }
         return states;
     }
 

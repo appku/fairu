@@ -25,6 +25,16 @@ describe('#constructor', () => {
     });
 });
 
+describe('.packageJSON', () => {
+    it('throws an error on missing package.json file.', () => {
+        expect(() => Fairu.packageJSON('./test')).toThrow();
+    });
+    it('reads and parses a package.json file.', () => {
+        let pkg = Fairu.packageJSON('./');
+        expect(pkg.name).toBe('@appku/fairu');
+    });
+});
+
 describe('.stringify', () => {
     it('throws on unknown format', () => {
         expect(() => Fairu.stringify('bob', testObject)).toThrow('format');
