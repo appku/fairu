@@ -53,6 +53,15 @@ let writeResults = await Fairu
 //found = [...PathState]
 ```
 
+## Other Utilities
+Fairu also provides a number of static utility functions to make your life easier:
+
+- `mv`: Move a file or directory (recursively) to another.
+- `cp`: Copy a file or directory (recursively) to another.
+- `stringify`: Stringify a JavaScript object into a `json`, `toml`, or `yaml` string.
+- `parse`: Parse `json`, `toml`, or `yaml` string content into a JavaScript object.
+- `packageJSON`: Read a `package.json` file synchronously from a specific directory.
+
 # Configuration
 By default, Fairu works out of the box without needing any adjustment. You can tweak the behavior of path discovery though by setting the `options` property on the Fairu instance you create. This affects the path matching and discovery prior to taking action on defined paths.
 
