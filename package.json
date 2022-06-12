@@ -17,7 +17,7 @@
         "writer"
     ],
     "author": "Append Media, LLC",
-    "license": "SEE LICENSE IN LICENSE",
+    "license": "MS-PL",
     "type": "module",
     "main": "fairu.js",
     "scripts": {

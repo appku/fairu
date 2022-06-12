@@ -1,4 +1,9 @@
-# @AppKu/Fairu
+
+[![NPM](https://img.shields.io/npm/v/@appku/fairu)](https://npmjs.org/package/@appku/fairu)
+[![License](https://img.shields.io/npm/l/@appku/fairu)](https://npmjs.org/package/@appku/fairu)
+[![Downloads](https://img.shields.io/npm/dt/@appku/fairu)](https://npmjs.org/package/@appku/fairu)
+
+# Fairu
 Fairu is an asynchronous utility library that provides fast and reliable file-system operations that can be daisy chained together and leverage glob patterns, and serialization to toml, json, and yaml.
 This is a library built within the [AppKu](https://github.com/appku) ecosystem of tools and utilities to help build apps. Specifically Fairu provides file and directory read/write operations for regular, YAML, TOML, and env files.
 
