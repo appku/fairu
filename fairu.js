@@ -60,9 +60,15 @@ class Fairu {
              */
             format: null,
             /**
+             * Default: 'utf8'
              * @type {String}
              */
-            encoding: null
+            encoding: null,
+            /**
+             * Default: 0o666
+             * @type {Number}
+             */
+            mode: null
         };
     }
 
@@ -270,6 +276,24 @@ class Fairu {
             throw new Error('The "encoding" argument, when specified, must be a string.');
         }
         this.metadata.encoding = encoding || null;
+        return this;
+    }
+
+    /**
+     * Sets the file permissions for newly created files (affecting `append` and `write`) to the specified value, 
+     * usually expressed in octal. By default the file mode is 0o666 (read-write all users and groups and others).
+     * 
+     * Calling this function without an argument or `null` will reset it to it's default.
+     * @throws Error when the mode value is specified but not a valid value.
+     * @param {Number} mode - The file permissions mode to use when appending and writing files.
+     * @returns {Fairu}
+     */
+    permission(mode) {
+        let modeType = typeof mode;
+        if (modeType !== 'undefined' && mode !== null && modeType !== 'number') {
+            throw new Error('The "mode" argument, when specified, must be a number.');
+        }
+        this.metadata.mode = mode || null;
         return this;
     }
 
@@ -527,7 +551,8 @@ class Fairu {
                             content = Fairu.stringify(this.metadata.format, content);
                         }
                         await fs.writeFile(state.path, content, {
-                            encoding: this.metadata.encoding
+                            encoding: this.metadata.encoding,
+                            mode: this.metadata.mode
                         });
                     }
                 } catch (err) {
@@ -569,7 +594,8 @@ class Fairu {
                             content = Fairu.stringify(this.metadata.format, content);
                         }
                         await fs.appendFile(state.path, content, {
-                            encoding: this.metadata.encoding
+                            encoding: this.metadata.encoding,
+                            mode: this.metadata.mode
                         });
                     }
                 } catch (err) {
